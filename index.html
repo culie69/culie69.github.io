@@ -1,0 +1,294 @@
+﻿<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Linfeng Li | Personal Academic Website</title>
+  <meta name="description" content="Linfeng Li personal academic website: education, research directions, skills, certificates, and contact.">
+  <meta property="og:title" content="Linfeng Li | Personal Academic Website">
+  <meta property="og:description" content="A concise and detailed bilingual personal academic website.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/img/avatar-placeholder.svg">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-lang="zh" data-theme="light">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#home" aria-label="Home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span data-bind="name_en">Linfeng Li</span>
+      </a>
+      <div class="header-actions">
+        <div class="lang-switch" role="group" aria-label="Language switch">
+          <button type="button" data-lang-btn="zh">中</button>
+          <button type="button" data-lang-btn="en">EN</button>
+        </div>
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch theme">◐</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container section-stack">
+      <section id="home" class="panel intro-panel reveal" data-home-panel>
+        <div>
+          <h1 class="hero-title">
+            <span class="lang zh"><span data-bind="name_zh">李林峰</span> / <span data-bind="name_en">Linfeng Li</span></span>
+            <span class="lang en"><span data-bind="name_en">Linfeng Li</span> / <span data-bind="name_zh">李林峰</span></span>
+          </h1>
+          <p class="hero-subtitle">
+            <span class="lang zh" data-bind="title_zh">南方科技大学地球物理学博士</span>
+            <span class="lang en" data-bind="title_en">Ph.D. in Geophysics, SUSTech</span>
+          </p>
+
+          <div class="profile-info">
+            <p>
+              <strong><span class="lang zh">学校：</span><span class="lang en">School:</span></strong>
+              <span class="lang zh" data-bind="school_zh">南方科技大学</span>
+              <span class="lang en" data-bind="school_en">Southern University of Science and Technology</span>
+            </p>
+            <p>
+              <strong><span class="lang zh">城市：</span><span class="lang en">City:</span></strong>
+              <span class="lang zh" data-bind="city_zh">中国广东省深圳市</span>
+              <span class="lang en" data-bind="city_en">Shenzhen, Guangdong, China</span>
+            </p>
+            <p>
+              <strong>Email:</strong>
+              <span data-bind="contact_email">your-email@example.com</span>
+            </p>
+            <p>
+              <strong><span class="lang zh">电话：</span><span class="lang en">Phone:</span></strong>
+              <span data-bind="phone">13481156117</span>
+            </p>
+          </div>
+        </div>
+
+        <aside class="panel avatar-card">
+          <div class="avatar-frame">
+            <img src="assets/img/avatar-placeholder.svg" alt="Profile avatar" data-avatar-image>
+          </div>
+          <div class="upload-tools">
+            <button class="btn primary" type="button" data-avatar-trigger>
+              <span class="lang zh">上传头像</span>
+              <span class="lang en">Upload Avatar</span>
+            </button>
+            <button class="btn subtle" type="button" data-avatar-reset>
+              <span class="lang zh">重置</span>
+              <span class="lang en">Reset</span>
+            </button>
+            <input class="file-input" type="file" accept="image/*" data-avatar-input>
+          </div>
+          <small data-avatar-status>
+            <span class="lang zh">支持 JPG/PNG，最大 5MB，保存在当前浏览器。</span>
+            <span class="lang en">Supports JPG/PNG up to 5MB, saved in current browser.</span>
+          </small>
+        </aside>
+      </section>
+
+      <section class="panel section-nav reveal" aria-label="Section navigation">
+        <nav class="section-nav-inner">
+          <a class="nav-link" href="#home"><span class="lang zh">主页</span><span class="lang en">Home</span></a>
+          <a class="nav-link" href="#education"><span class="lang zh">教育经历</span><span class="lang en">Education</span></a>
+          <a class="nav-link" href="#research"><span class="lang zh">研究方向</span><span class="lang en">Research Directions</span></a>
+          <a class="nav-link" href="#skills"><span class="lang zh">技能</span><span class="lang en">Skills</span></a>
+          <a class="nav-link" href="#certificates"><span class="lang zh">证书</span><span class="lang en">Certificates</span></a>
+          <a class="nav-link" href="#contact"><span class="lang zh">联系</span><span class="lang en">Contact</span></a>
+        </nav>
+      </section>
+
+      <section id="education" class="panel card reveal">
+        <h2><span class="lang zh">教育经历</span><span class="lang en">Education Journey</span></h2>
+        <p class="page-lead"><span class="lang zh" data-bind="edu_intro_zh">从高中到博士阶段的完整学术路径。</span><span class="lang en" data-bind="edu_intro_en">A complete academic path from high school to doctoral studies.</span></p>
+        <ol class="timeline" style="margin-top:0.9rem;">
+          <li>
+            <h3><span class="lang zh" data-bind="edu1_zh">广西大学附属中学</span><span class="lang en" data-bind="edu1_en">High School Affiliated to Guangxi University</span></h3>
+            <p><span class="lang zh" data-bind="edu1_desc_zh">高中阶段，完成基础学科训练并形成科学兴趣。</span><span class="lang en" data-bind="edu1_desc_en">Built solid fundamentals and developed early scientific interest.</span></p>
+          </li>
+          <li>
+            <h3><span class="lang zh" data-bind="edu2_zh">长江大学（武汉校区）</span><span class="lang en" data-bind="edu2_en">Yangtze University (Wuhan Campus)</span></h3>
+            <p><span class="lang zh" data-bind="edu2_desc_zh">本科阶段，打下专业课程与工程实践基础。</span><span class="lang en" data-bind="edu2_desc_en">Undergraduate stage focused on disciplinary courses and engineering practice.</span></p>
+          </li>
+          <li>
+            <h3><span class="lang zh" data-bind="edu3_zh">南方科技大学（硕士、博士）</span><span class="lang en" data-bind="edu3_en">SUSTech (Master and Ph.D.)</span></h3>
+            <p><span class="lang zh" data-bind="edu3_desc_zh">硕士和博士阶段，专注地球物理研究与科学计算。</span><span class="lang en" data-bind="edu3_desc_en">Master and doctoral stages focused on geophysics research and scientific computing.</span></p>
+          </li>
+        </ol>
+      </section>
+
+      <section id="research" class="panel card reveal">
+        <h2><span class="lang zh">研究方向</span><span class="lang en">Research Directions</span></h2>
+        <div class="research-list" style="margin-top:0.75rem;">
+          <article class="card research-row">
+            <h3><span class="lang zh" data-bind="res1_zh">地球物理数值模拟</span><span class="lang en" data-bind="res1_en">Geophysical Numerical Simulation</span></h3>
+            <p><span class="lang zh" data-bind="res1_desc_zh">研究波动传播、离散算法和稳定性分析。</span><span class="lang en" data-bind="res1_desc_en">Study wave propagation, discretization schemes, and stability analysis.</span></p>
+          </article>
+          <article class="card research-row">
+            <h3><span class="lang zh" data-bind="res2_zh">科学计算与建模</span><span class="lang en" data-bind="res2_en">Scientific Computing & Modeling</span></h3>
+            <p><span class="lang zh" data-bind="res2_desc_zh">使用 MATLAB/Python 进行模型构建和实验验证。</span><span class="lang en" data-bind="res2_desc_en">Use MATLAB/Python for model building and experimental verification.</span></p>
+          </article>
+          <article class="card research-row">
+            <h3><span class="lang zh" data-bind="res3_zh">方法优化</span><span class="lang en" data-bind="res3_en">Method Optimization</span></h3>
+            <p><span class="lang zh" data-bind="res3_desc_zh">面向复杂地学场景优化计算流程和效率。</span><span class="lang en" data-bind="res3_desc_en">Optimize workflows and efficiency for complex geoscience scenarios.</span></p>
+          </article>
+        </div>
+      </section>
+
+      <section id="skills" class="panel card reveal">
+        <h2><span class="lang zh">技能矩阵</span><span class="lang en">Skill Matrix</span></h2>
+        <div class="grid cols-3" style="margin-top:0.75rem;">
+          <article class="card">
+            <h3>MATLAB</h3>
+            <p><span class="lang zh">用于数值模拟、算法验证和可视化。</span><span class="lang en">For numerical simulation, algorithm validation, and visualization.</span></p>
+            <div class="skill-meter"><div class="meter-track"><div class="meter-fill" style="width:88%;"></div></div></div>
+          </article>
+          <article class="card">
+            <h3>Python</h3>
+            <p><span class="lang zh">用于数据分析、自动化脚本和实验流程管理。</span><span class="lang en">For data analysis, automation scripts, and workflow management.</span></p>
+            <div class="skill-meter"><div class="meter-track"><div class="meter-fill" style="width:80%;"></div></div></div>
+          </article>
+          <article class="card">
+            <h3><span class="lang zh">乒乓球</span><span class="lang en">Table Tennis</span></h3>
+            <p><span class="lang zh">强调反应速度、专注力和长期训练能力。</span><span class="lang en">Emphasizes reaction, concentration, and long-term discipline.</span></p>
+            <div class="skill-meter"><div class="meter-track"><div class="meter-fill" style="width:76%;"></div></div></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="certificates" class="section-stack reveal">
+        <section class="panel card" data-cert-manager="matlab">
+          <h2>MATLAB <span class="lang zh">证书/奖项</span><span class="lang en">Certificates/Awards</span></h2>
+          <form class="cert-form" autocomplete="off">
+            <input class="input" type="text" name="name" placeholder="Certificate / Award Name" required>
+            <input class="input" type="text" name="issuer" placeholder="Issuer">
+            <input class="input" type="text" name="date" placeholder="Date">
+            <input class="input" type="url" name="link" placeholder="Link (optional)">
+            <button class="btn primary" type="submit"><span class="lang zh">添加</span><span class="lang en">Add</span></button>
+          </form>
+          <p class="empty"><span class="lang zh">暂无记录。</span><span class="lang en">No records yet.</span></p>
+          <ul class="list cert-list"></ul>
+        </section>
+
+        <section class="panel card" data-cert-manager="python">
+          <h2>Python <span class="lang zh">证书/奖项</span><span class="lang en">Certificates/Awards</span></h2>
+          <form class="cert-form" autocomplete="off">
+            <input class="input" type="text" name="name" placeholder="Certificate / Award Name" required>
+            <input class="input" type="text" name="issuer" placeholder="Issuer">
+            <input class="input" type="text" name="date" placeholder="Date">
+            <input class="input" type="url" name="link" placeholder="Link (optional)">
+            <button class="btn primary" type="submit"><span class="lang zh">添加</span><span class="lang en">Add</span></button>
+          </form>
+          <p class="empty"><span class="lang zh">暂无记录。</span><span class="lang en">No records yet.</span></p>
+          <ul class="list cert-list"></ul>
+        </section>
+
+        <section class="panel card" data-cert-manager="tabletennis">
+          <h2><span class="lang zh">乒乓球证书/奖项</span><span class="lang en">Table Tennis Certificates/Awards</span></h2>
+          <form class="cert-form" autocomplete="off">
+            <input class="input" type="text" name="name" placeholder="Certificate / Award Name" required>
+            <input class="input" type="text" name="issuer" placeholder="Issuer">
+            <input class="input" type="text" name="date" placeholder="Date">
+            <input class="input" type="url" name="link" placeholder="Link (optional)">
+            <button class="btn primary" type="submit"><span class="lang zh">添加</span><span class="lang en">Add</span></button>
+          </form>
+          <p class="empty"><span class="lang zh">暂无记录。</span><span class="lang en">No records yet.</span></p>
+          <ul class="list cert-list"></ul>
+        </section>
+      </section>
+
+      <section id="contact" class="grid cols-2 reveal">
+        <article class="panel card">
+          <h2><span class="lang zh">联系方式</span><span class="lang en">Contact Details</span></h2>
+          <p><strong><span class="lang zh">姓名：</span><span class="lang en">Name:</span></strong> <span data-bind="name_en">Linfeng Li</span></p>
+          <p><strong><span class="lang zh">学校：</span><span class="lang en">School:</span></strong> <span class="lang zh" data-bind="school_zh">南方科技大学</span><span class="lang en" data-bind="school_en">Southern University of Science and Technology</span></p>
+          <p><strong><span class="lang zh">头衔：</span><span class="lang en">Title:</span></strong> <span class="lang zh" data-bind="title_zh">南方科技大学地球物理学博士</span><span class="lang en" data-bind="title_en">Ph.D. in Geophysics, SUSTech</span></p>
+          <p><strong><span class="lang zh">城市：</span><span class="lang en">City:</span></strong> <span class="lang zh" data-bind="city_zh">中国广东省深圳市</span><span class="lang en" data-bind="city_en">Shenzhen, Guangdong, China</span></p>
+          <p><strong><span class="lang zh">电话：</span><span class="lang en">Phone:</span></strong> <span data-bind="phone">13481156117</span></p>
+          <p><strong>Email:</strong> <span data-bind="contact_email">your-email@example.com</span></p>
+        </article>
+
+        <article class="panel card">
+          <h2><span class="lang zh">留言</span><span class="lang en">Message</span></h2>
+          <p><span class="lang zh">填写后会调用默认邮件客户端发送。</span><span class="lang en">Submitting opens your default mail client.</span></p>
+          <form data-contact-form data-contact-email="" autocomplete="off">
+            <div class="grid" style="margin-top:0.7rem;">
+              <input class="input" type="text" name="name" placeholder="Name / 姓名" required>
+              <input class="input" type="email" name="email" placeholder="Email / 邮箱">
+              <textarea class="input" name="message" rows="5" placeholder="Message / 留言内容" required></textarea>
+              <button class="btn primary" type="submit"><span class="lang zh">发送</span><span class="lang en">Send</span></button>
+            </div>
+            <p class="empty" style="margin-top:0.65rem;" data-contact-status>
+              <span class="lang zh">请在管理面板设置你的公开邮箱。</span>
+              <span class="lang en">Set your public email in admin panel first.</span>
+            </p>
+          </form>
+        </article>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <span class="lang zh">© <span data-year></span> <span data-bind="name_zh">李林峰</span> | 个人学术网站</span>
+      <span class="lang en">© <span data-year></span> <span data-bind="name_en">Linfeng Li</span> | Personal Academic Website</span>
+    </div>
+  </footer>
+
+  <button type="button" class="admin-fab" data-admin-open aria-label="Admin">⚙</button>
+  <div class="admin-overlay" data-admin-overlay hidden></div>
+  <aside class="admin-panel" data-admin-panel hidden>
+    <div class="admin-head">
+      <strong><span class="lang zh">管理编辑</span><span class="lang en">Admin Editor</span></strong>
+      <button class="btn subtle" type="button" data-admin-close>
+        <span class="lang zh">关闭</span><span class="lang en">Close</span>
+      </button>
+    </div>
+    <div class="admin-body">
+      <section class="admin-section" data-admin-auth>
+        <p class="admin-note"><span class="lang zh">首次使用先设置密码，之后输入密码登录。仅登录状态可编辑。</span><span class="lang en">Set a password on first use, then log in to edit.</span></p>
+        <div class="admin-grid">
+          <input class="input" type="password" placeholder="Admin Password" data-admin-password>
+          <button class="btn primary" type="button" data-admin-login>
+            <span class="lang zh">登录</span><span class="lang en">Login</span>
+          </button>
+        </div>
+        <div class="admin-actions" style="margin-top:0.55rem;">
+          <button class="btn" type="button" data-admin-setup>
+            <span class="lang zh">首次设置密码</span><span class="lang en">Set Initial Password</span>
+          </button>
+          <button class="btn subtle" type="button" data-admin-change hidden>
+            <span class="lang zh">修改密码</span><span class="lang en">Change Password</span>
+          </button>
+        </div>
+        <p class="admin-note" data-admin-auth-status></p>
+      </section>
+
+      <section class="admin-section" data-admin-editor hidden>
+        <h3 style="margin-top:0;"><span class="lang zh">网站信息编辑</span><span class="lang en">Website Content Editor</span></h3>
+        <div class="admin-grid" data-admin-fields></div>
+
+        <div class="admin-actions" style="margin-top:0.8rem;">
+          <button class="btn primary" type="button" data-admin-save>
+            <span class="lang zh">保存并应用</span><span class="lang en">Save & Apply</span>
+          </button>
+          <button class="btn" type="button" data-admin-reset>
+            <span class="lang zh">恢复默认</span><span class="lang en">Reset Default</span>
+          </button>
+          <button class="btn" type="button" data-admin-export>
+            <span class="lang zh">导出JSON</span><span class="lang en">Export JSON</span>
+          </button>
+          <button class="btn" type="button" data-admin-import-trigger>
+            <span class="lang zh">导入JSON</span><span class="lang en">Import JSON</span>
+          </button>
+          <button class="btn subtle" type="button" data-admin-logout>
+            <span class="lang zh">退出登录</span><span class="lang en">Logout</span>
+          </button>
+          <input type="file" accept="application/json" hidden data-admin-import>
+        </div>
+        <p class="admin-note" data-admin-edit-status></p>
+      </section>
+    </div>
+  </aside>
+
+  <script src="assets/js/site.js"></script>
+</body>
+</html>
