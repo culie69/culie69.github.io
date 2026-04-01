@@ -519,6 +519,10 @@ a.btn {
   word-break: break-all;
 }
 
+.text-preserve-lines {
+  white-space: pre-line;
+}
+
 .skill-meter {
   margin-top: 0.7rem;
 }

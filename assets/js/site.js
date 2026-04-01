@@ -430,7 +430,7 @@
     const enText = String(en || '').trim();
     const displayZh = zhText || enText;
     const displayEn = enText || zhText;
-    return `<span class="lang zh">${escapeHtml(displayZh)}</span><span class="lang en">${escapeHtml(displayEn)}</span>`;
+    return `<span class="lang zh text-preserve-lines">${escapeHtml(displayZh)}</span><span class="lang en text-preserve-lines">${escapeHtml(displayEn)}</span>`;
   }
 
   function safeLink(linkText) {
@@ -521,7 +521,10 @@
     byQuery('[data-bind]').forEach((el) => {
       const key = el.dataset.bind;
       if (Object.prototype.hasOwnProperty.call(content, key)) {
-        el.textContent = content[key];
+        const value = String(content[key] || '');
+        el.textContent = value;
+        const hasLineBreak = /[\r\n]/.test(value);
+        el.classList.toggle('text-preserve-lines', hasLineBreak);
       }
     });
 
@@ -1268,11 +1271,12 @@
     setYear();
     initLanguage();
     initTheme();
-    await initSiteContent();
+    const contentReady = initSiteContent();
     initAnchorNav();
     initReveal();
     initAdminPanel();
     initContactForm();
+    await contentReady;
   }
 
   document.addEventListener('DOMContentLoaded', () => {
