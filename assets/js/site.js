@@ -4,6 +4,8 @@
     lang: 'll_site_lang',
     theme: 'll_site_theme',
     siteContent: 'll_site_content',
+    siteDraft: 'll_site_content_draft',
+    siteDraftDirty: 'll_site_draft_dirty',
     adminHash: 'll_admin_password_hash',
     adminSession: 'll_admin_session',
     adminCustom: 'll_admin_custom_password',
@@ -13,7 +15,17 @@
   const DEFAULT_ADMIN_HASH = '9d88dcf23ddc8847acde16ffd32fd569525f0b5f1ef12a5ca8a3415089e9b889';
   const AVATAR_PLACEHOLDER = 'assets/img/avatar-placeholder.svg';
   const COLLECTION_KEYS = ['skills', 'certificates', 'publications'];
+  const SECTION_ORDER_DEFAULT = ['education', 'research', 'skills', 'certificates', 'publications', 'contact'];
+  const SECTION_LABELS = {
+    education: { zh: '教育经历', en: 'Education' },
+    research: { zh: '研究方向', en: 'Research' },
+    skills: { zh: '技能', en: 'Skills' },
+    certificates: { zh: '证书与奖项', en: 'Certificates & Awards' },
+    publications: { zh: '出版论文', en: 'Publications' },
+    contact: { zh: '联系', en: 'Contact' }
+  };
   const PUBLISHED_CONTENT_URL = 'assets/data/site-content.json';
+  const PUBLISHED_FETCH_TIMEOUT_MS = 8000;
   const DEFAULT_PUBLISH_CONFIG = {
     owner: 'culie69',
     repo: 'culie69.github.io',
@@ -99,6 +111,7 @@
     res4_location_zh: '长江大学',
     res4_location_en: 'Yangtze University',
     res4_date: '2023.05 - 2024.06',
+    section_order: [...SECTION_ORDER_DEFAULT],
 
     skills: [
       {
@@ -352,6 +365,25 @@
     }
   }
 
+  function normalizeSectionOrder(orderValue) {
+    const source = Array.isArray(orderValue) ? orderValue.map((item) => String(item || '').trim()) : [];
+    const next = [];
+
+    source.forEach((id) => {
+      if (SECTION_ORDER_DEFAULT.includes(id) && !next.includes(id)) {
+        next.push(id);
+      }
+    });
+
+    SECTION_ORDER_DEFAULT.forEach((id) => {
+      if (!next.includes(id)) {
+        next.push(id);
+      }
+    });
+
+    return next;
+  }
+
   function normalizeCollectionItem(item) {
     const next = item && typeof item === 'object' ? item : {};
     return {
@@ -371,6 +403,11 @@
     const raw = rawValue && typeof rawValue === 'object' ? rawValue : {};
 
     Object.keys(base).forEach((key) => {
+      if (key === 'section_order') {
+        base[key] = normalizeSectionOrder(raw[key]);
+        return;
+      }
+
       if (COLLECTION_KEYS.includes(key)) {
         const source = raw[key];
         base[key] = Array.isArray(source) ? source.map(normalizeCollectionItem) : deepClone(DEFAULT_CONTENT[key]);
@@ -388,28 +425,200 @@
 
   function loadDraftSiteContent() {
     try {
-      const rawText = localStorage.getItem(STORAGE_KEYS.siteContent);
-      const raw = rawText ? JSON.parse(rawText) : {};
+      const rawText = localStorage.getItem(STORAGE_KEYS.siteDraft);
+      if (!rawText) {
+        const dirty = localStorage.getItem(STORAGE_KEYS.siteDraftDirty) === '1';
+        if (!dirty) {
+          return null;
+        }
+        const legacyText = localStorage.getItem(STORAGE_KEYS.siteContent);
+        if (!legacyText) {
+          return null;
+        }
+        return mergeSiteContent(JSON.parse(legacyText));
+      }
+      const raw = JSON.parse(rawText);
       return mergeSiteContent(raw);
     } catch (error) {
       return null;
     }
   }
 
-  function saveSiteContent(content) {
+  function loadCachedPublishedSiteContent() {
+    try {
+      const rawText = localStorage.getItem(STORAGE_KEYS.siteContent);
+      if (!rawText) {
+        return null;
+      }
+      const raw = JSON.parse(rawText);
+      return mergeSiteContent(raw);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function saveDraftSiteContent(content) {
+    localStorage.setItem(STORAGE_KEYS.siteDraft, JSON.stringify(content));
+  }
+
+  function saveCachedPublishedSiteContent(content) {
     localStorage.setItem(STORAGE_KEYS.siteContent, JSON.stringify(content));
+  }
+
+  function hasDirtyDraft() {
+    return localStorage.getItem(STORAGE_KEYS.siteDraftDirty) === '1';
+  }
+
+  function markDraftDirty() {
+    localStorage.setItem(STORAGE_KEYS.siteDraftDirty, '1');
+  }
+
+  function clearDraftDirty() {
+    localStorage.removeItem(STORAGE_KEYS.siteDraftDirty);
+  }
+
+  function withCacheBust(url, forceFresh) {
+    if (!forceFresh) {
+      return url;
+    }
+    const join = url.includes('?') ? '&' : '?';
+    return `${url}${join}t=${Date.now()}`;
+  }
+
+  function buildPublishedContentSources(forceFresh) {
+    const config = loadPublishConfig();
+    const owner = String(config.owner || DEFAULT_PUBLISH_CONFIG.owner || '').trim();
+    const repo = String(config.repo || DEFAULT_PUBLISH_CONFIG.repo || '').trim();
+    const branch = String(config.branch || DEFAULT_PUBLISH_CONFIG.branch || '').trim();
+    const path = String(config.path || DEFAULT_PUBLISH_CONFIG.path || '').trim();
+
+    const sources = [
+      {
+        kind: 'json',
+        url: withCacheBust(PUBLISHED_CONTENT_URL, forceFresh),
+        cache: forceFresh ? 'no-store' : 'no-cache'
+      }
+    ];
+
+    if (owner && repo && branch && path) {
+      const encodedPath = encodePathForGitHub(path);
+      sources.push(
+        {
+          kind: 'json',
+          url: withCacheBust(
+            `https://cdn.jsdelivr.net/gh/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}@${encodeURIComponent(branch)}/${encodedPath}`,
+            forceFresh
+          ),
+          cache: 'no-cache'
+        },
+        {
+          kind: 'json',
+          url: withCacheBust(
+            `https://raw.githubusercontent.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/${encodeURIComponent(branch)}/${encodedPath}`,
+            forceFresh
+          ),
+          cache: 'no-cache'
+        },
+        {
+          kind: 'github-api',
+          url: withCacheBust(
+            `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodedPath}?ref=${encodeURIComponent(branch)}`,
+            forceFresh
+          ),
+          cache: 'no-store'
+        }
+      );
+    }
+
+    const dedup = new Set();
+    return sources.filter((item) => {
+      if (dedup.has(item.url)) {
+        return false;
+      }
+      dedup.add(item.url);
+      return true;
+    });
+  }
+
+  function fromBase64Utf8(base64Text) {
+    const cleaned = String(base64Text || '').replace(/\s+/g, '');
+    const binary = atob(cleaned);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    if (typeof TextDecoder !== 'undefined') {
+      return new TextDecoder().decode(bytes);
+    }
+    let escaped = '';
+    bytes.forEach((byte) => {
+      escaped += `%${byte.toString(16).padStart(2, '0')}`;
+    });
+    return decodeURIComponent(escaped);
+  }
+
+  async function fetchPublishedSource(source) {
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = controller ? window.setTimeout(() => controller.abort(), PUBLISHED_FETCH_TIMEOUT_MS) : null;
+    try {
+      const headers =
+        source.kind === 'github-api'
+          ? {
+              Accept: 'application/vnd.github+json',
+              'X-GitHub-Api-Version': '2022-11-28'
+            }
+          : undefined;
+      const response = await fetch(source.url, {
+        cache: source.cache,
+        signal: controller ? controller.signal : undefined,
+        headers
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      if (source.kind === 'github-api') {
+        const payload = await response.json();
+        if (!payload || payload.encoding !== 'base64' || !payload.content) {
+          throw new Error('GitHub API payload invalid.');
+        }
+        const decoded = fromBase64Utf8(payload.content);
+        return JSON.parse(decoded);
+      }
+      return response.json();
+    } finally {
+      if (timer) {
+        window.clearTimeout(timer);
+      }
+    }
+  }
+
+  function firstSuccessful(promises) {
+    if (promises.length === 0) {
+      return Promise.reject(new Error('No fetch sources available.'));
+    }
+
+    if (typeof Promise.any === 'function') {
+      return Promise.any(promises);
+    }
+
+    return new Promise((resolve, reject) => {
+      let pending = promises.length;
+      promises.forEach((promise) => {
+        Promise.resolve(promise)
+          .then((value) => resolve(value))
+          .catch(() => {
+            pending -= 1;
+            if (pending === 0) {
+              reject(new Error('All fetch sources failed.'));
+            }
+          });
+      });
+    });
   }
 
   async function loadPublishedSiteContent(options = {}) {
     const forceFresh = !!(options && options.forceFresh);
-    const url = forceFresh ? `${PUBLISHED_CONTENT_URL}?t=${Date.now()}` : PUBLISHED_CONTENT_URL;
-    const cacheMode = forceFresh ? 'no-store' : 'no-cache';
     try {
-      const response = await fetch(url, { cache: cacheMode });
-      if (!response.ok) {
-        return null;
-      }
-      const parsed = await response.json();
+      const sources = buildPublishedContentSources(forceFresh);
+      const fetchJobs = sources.map((source) => fetchPublishedSource(source));
+      const parsed = await firstSuccessful(fetchJobs);
       return mergeSiteContent(parsed);
     } catch (error) {
       return null;
@@ -470,6 +679,43 @@
     });
   }
 
+  function applySectionOrder(sectionOrder) {
+    const order = normalizeSectionOrder(sectionOrder);
+    const sectionStack = document.querySelector('.section-stack');
+    const nav = document.querySelector('.section-nav-inner');
+
+    if (sectionStack) {
+      order.forEach((id) => {
+        const section = document.getElementById(id);
+        if (section && section.parentElement === sectionStack) {
+          sectionStack.appendChild(section);
+        }
+      });
+    }
+
+    if (nav) {
+      const homeLink = nav.querySelector('.nav-link[href="#home"]');
+      const linkMap = {};
+      byQuery('.nav-link[href^="#"]', nav).forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('#') && href !== '#home') {
+          linkMap[href.slice(1)] = link;
+        }
+      });
+
+      order.forEach((id) => {
+        const link = linkMap[id];
+        if (link) {
+          nav.appendChild(link);
+        }
+      });
+
+      if (homeLink) {
+        nav.prepend(homeLink);
+      }
+    }
+  }
+
   function renderCollectionPublic(type, items) {
     const container = document.querySelector(`[data-list="${type}"]`);
     const empty = document.querySelector(`[data-list-empty="${type}"]`);
@@ -528,6 +774,8 @@
       }
     });
 
+    applySectionOrder(content.section_order);
+
     const contactForm = document.querySelector('[data-contact-form]');
     if (contactForm) {
       contactForm.dataset.contactEmail = content.contact_email || '';
@@ -554,15 +802,28 @@
   }
 
   async function initSiteContent() {
+    const dirtyDraft = hasDirtyDraft();
     const draft = loadDraftSiteContent();
-    siteContent = draft || mergeSiteContent({});
+    const cachedPublished = loadCachedPublishedSiteContent();
+
+    if (dirtyDraft && draft) {
+      siteContent = draft;
+    } else if (cachedPublished) {
+      siteContent = cachedPublished;
+    } else {
+      siteContent = mergeSiteContent({});
+    }
     applySiteContent(siteContent);
 
-    const published = await loadPublishedSiteContent();
+    const published = await loadPublishedSiteContent({ forceFresh: true });
     if (published) {
-      siteContent = published;
-      saveSiteContent(siteContent);
-      applySiteContent(siteContent);
+      saveCachedPublishedSiteContent(published);
+      if (!dirtyDraft) {
+        siteContent = published;
+        saveDraftSiteContent(siteContent);
+        clearDraftDirty();
+        applySiteContent(siteContent);
+      }
     }
   }
 
@@ -709,6 +970,7 @@
     const publishTokenInput = document.querySelector('[data-admin-publish-token]');
     const publishBtn = document.querySelector('[data-admin-publish]');
     const publishStatus = document.querySelector('[data-admin-publish-status]');
+    const sectionOrderList = document.querySelector('[data-admin-section-order-list]');
 
     if (!panel || !editorWrap || fieldGroupWraps.length === 0) {
       return;
@@ -766,6 +1028,32 @@
       path: publishPathInput ? publishPathInput.value.trim() : '',
       token: publishTokenInput ? publishTokenInput.value.trim() : ''
     });
+
+    const renderSectionOrderManager = () => {
+      if (!sectionOrderList) {
+        return;
+      }
+
+      const order = normalizeSectionOrder(siteContent.section_order);
+      siteContent.section_order = order;
+      sectionOrderList.innerHTML = '';
+
+      order.forEach((id, index) => {
+        const labels = SECTION_LABELS[id] || { zh: id, en: id };
+        const li = document.createElement('li');
+        li.className = 'list-item';
+        li.innerHTML = `
+          <div class="head">
+            <strong>${escapeHtml(labels.zh)} / ${escapeHtml(labels.en)}</strong>
+            <span class="admin-mini-actions">
+              <button type="button" class="btn subtle" data-section-order-action="up" data-index="${index}" ${index === 0 ? 'disabled' : ''}>上移</button>
+              <button type="button" class="btn subtle" data-section-order-action="down" data-index="${index}" ${index === order.length - 1 ? 'disabled' : ''}>下移</button>
+            </span>
+          </div>
+        `;
+        sectionOrderList.appendChild(li);
+      });
+    };
 
     const buildFieldForm = () => {
       Object.values(fieldGroupMap).forEach((wrap) => {
@@ -916,6 +1204,8 @@
                 <strong>${escapeHtml(row.title_zh || row.title_en || '未命名条目')}</strong>
                 <span class="admin-mini-actions">
                   <button type="button" class="btn subtle" data-collection-action="edit" data-index="${index}">编辑</button>
+                  <button type="button" class="btn subtle" data-collection-action="move-up" data-index="${index}" ${index === 0 ? 'disabled' : ''}>上移</button>
+                  <button type="button" class="btn subtle" data-collection-action="move-down" data-index="${index}" ${index === items.length - 1 ? 'disabled' : ''}>下移</button>
                   <button type="button" class="btn subtle" data-collection-action="remove" data-index="${index}">删除</button>
                 </span>
               </div>
@@ -927,7 +1217,8 @@
 
         const saveCollection = (items, successText) => {
           siteContent[type] = items.map(normalizeCollectionItem);
-          saveSiteContent(siteContent);
+          markDraftDirty();
+          saveDraftSiteContent(siteContent);
           applySiteContent(siteContent);
           renderAdminList();
           setEditStatus(`${successText}（已保存本地草稿，需发布到 GitHub 后访客可见）`);
@@ -1000,6 +1291,30 @@
             return;
           }
 
+          if (action === 'move-up' || action === 'move-down') {
+            if (!isLoggedIn()) {
+              setEditStatus('请先登录管理员账号。');
+              return;
+            }
+            const offset = action === 'move-up' ? -1 : 1;
+            const nextIndex = index + offset;
+            if (nextIndex < 0 || nextIndex >= items.length) {
+              return;
+            }
+            const next = items.slice();
+            const moved = next[index];
+            next[index] = next[nextIndex];
+            next[nextIndex] = moved;
+
+            if (editingIndex === index) {
+              editingIndex = nextIndex;
+            } else if (editingIndex === nextIndex) {
+              editingIndex = index;
+            }
+            saveCollection(next, '条目顺序已更新。');
+            return;
+          }
+
           if (action === 'edit') {
             form.elements.title_zh.value = item.title_zh;
             form.elements.title_en.value = item.title_en;
@@ -1019,6 +1334,47 @@
         renderAdminList();
       });
     };
+
+    if (sectionOrderList) {
+      sectionOrderList.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) {
+          return;
+        }
+
+        const action = target.dataset.sectionOrderAction;
+        const index = Number(target.dataset.index);
+        if (!action || Number.isNaN(index)) {
+          return;
+        }
+
+        if (!isLoggedIn()) {
+          setEditStatus('请先登录管理员账号。');
+          return;
+        }
+
+        const order = normalizeSectionOrder(siteContent.section_order);
+        const nextIndex = action === 'up' ? index - 1 : index + 1;
+        if (nextIndex < 0 || nextIndex >= order.length) {
+          return;
+        }
+
+        const next = order.slice();
+        const moved = next[index];
+        next[index] = next[nextIndex];
+        next[nextIndex] = moved;
+
+        siteContent.section_order = next;
+        markDraftDirty();
+        saveDraftSiteContent(siteContent);
+        applySiteContent(siteContent);
+        renderSectionOrderManager();
+        setEditStatus('栏目顺序已更新（本地草稿），请发布到 GitHub 后同步给访客。');
+      });
+
+      adminCollectionRenderers.push(renderSectionOrderManager);
+      renderSectionOrderManager();
+    }
 
     buildFieldForm();
     fillFields();
@@ -1072,7 +1428,8 @@
           return;
         }
         siteContent = readFields();
-        saveSiteContent(siteContent);
+        markDraftDirty();
+        saveDraftSiteContent(siteContent);
         applySiteContent(siteContent);
         setEditStatus('页面文本已保存为本地草稿，请点击“发布到GitHub”同步给所有访客。');
       });
@@ -1087,7 +1444,8 @@
           return;
         }
         siteContent = mergeSiteContent({});
-        saveSiteContent(siteContent);
+        markDraftDirty();
+        saveDraftSiteContent(siteContent);
         applySiteContent(siteContent);
         fillFields();
         adminCollectionRenderers.forEach((render) => render());
@@ -1129,7 +1487,8 @@
           try {
             const parsed = JSON.parse(String(reader.result || '{}'));
             siteContent = mergeSiteContent(parsed);
-            saveSiteContent(siteContent);
+            markDraftDirty();
+            saveDraftSiteContent(siteContent);
             applySiteContent(siteContent);
             fillFields();
             adminCollectionRenderers.forEach((render) => render());
@@ -1158,10 +1517,15 @@
           const published = await loadPublishedSiteContent({ forceFresh: true });
           if (published) {
             siteContent = published;
-            saveSiteContent(siteContent);
             applySiteContent(siteContent);
-            fillFields();
-            adminCollectionRenderers.forEach((render) => render());
+          }
+          saveCachedPublishedSiteContent(siteContent);
+          saveDraftSiteContent(siteContent);
+          clearDraftDirty();
+          fillFields();
+          adminCollectionRenderers.forEach((render) => render());
+          if (!published) {
+            applySiteContent(siteContent);
           }
           setPublishStatus('发布成功，访客刷新后即可看到最新内容。');
         } catch (error) {
@@ -1216,7 +1580,8 @@
             return;
           }
           siteContent.avatar_data_url = result;
-          saveSiteContent(siteContent);
+          markDraftDirty();
+          saveDraftSiteContent(siteContent);
           applySiteContent(siteContent);
           setAvatarStatus('头像已更新为本地草稿，请发布到 GitHub 后访客可见。');
         };
@@ -1231,7 +1596,8 @@
           return;
         }
         siteContent.avatar_data_url = '';
-        saveSiteContent(siteContent);
+        markDraftDirty();
+        saveDraftSiteContent(siteContent);
         applySiteContent(siteContent);
         setAvatarStatus('头像已重置为本地草稿，请发布到 GitHub 后访客可见。');
       });
