@@ -400,11 +400,12 @@
     localStorage.setItem(STORAGE_KEYS.siteContent, JSON.stringify(content));
   }
 
-  async function loadPublishedSiteContent() {
+  async function loadPublishedSiteContent(options = {}) {
+    const forceFresh = !!(options && options.forceFresh);
+    const url = forceFresh ? `${PUBLISHED_CONTENT_URL}?t=${Date.now()}` : PUBLISHED_CONTENT_URL;
+    const cacheMode = forceFresh ? 'no-store' : 'no-cache';
     try {
-      const response = await fetch(`${PUBLISHED_CONTENT_URL}?t=${Date.now()}`, {
-        cache: 'no-store'
-      });
+      const response = await fetch(url, { cache: cacheMode });
       if (!response.ok) {
         return null;
       }
@@ -551,9 +552,15 @@
 
   async function initSiteContent() {
     const draft = loadDraftSiteContent();
-    const published = await loadPublishedSiteContent();
-    siteContent = published || draft || mergeSiteContent({});
+    siteContent = draft || mergeSiteContent({});
     applySiteContent(siteContent);
+
+    const published = await loadPublishedSiteContent();
+    if (published) {
+      siteContent = published;
+      saveSiteContent(siteContent);
+      applySiteContent(siteContent);
+    }
   }
 
   async function hashPassword(password) {
@@ -704,6 +711,8 @@
       return;
     }
 
+    localStorage.removeItem(STORAGE_KEYS.adminSession);
+
     const fieldGroupMap = {};
     fieldGroupWraps.forEach((wrap) => {
       const groupId = wrap.dataset.adminFieldsGroup;
@@ -832,6 +841,10 @@
     };
 
     const openPanel = () => {
+      localStorage.removeItem(STORAGE_KEYS.adminSession);
+      if (passwordInput) {
+        passwordInput.value = '';
+      }
       panel.hidden = false;
       if (overlay) {
         overlay.hidden = false;
@@ -840,10 +853,15 @@
     };
 
     const closePanel = () => {
+      localStorage.removeItem(STORAGE_KEYS.adminSession);
+      if (passwordInput) {
+        passwordInput.value = '';
+      }
       panel.hidden = true;
       if (overlay) {
         overlay.hidden = true;
       }
+      refreshAuthView();
     };
 
     const bindCollectionManagers = () => {
@@ -1134,7 +1152,7 @@
         try {
           setPublishStatus('正在发布到 GitHub，请稍候...');
           await publishSiteContentToGitHub(config, siteContent);
-          const published = await loadPublishedSiteContent();
+          const published = await loadPublishedSiteContent({ forceFresh: true });
           if (published) {
             siteContent = published;
             saveSiteContent(siteContent);
