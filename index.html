@@ -29,88 +29,94 @@
   </header>
 
   <main>
-    <div class="container section-stack">
-      <section id="home" class="panel intro-panel reveal" data-home-panel>
-        <div>
+    <section id="home" class="profile-hero reveal" data-home-panel>
+      <div class="container profile-hero-inner">
+        <aside class="hero-avatar-block">
+          <div class="avatar-frame hero-avatar-frame">
+            <img src="assets/img/avatar-placeholder.svg" alt="Profile avatar" data-avatar-image>
+          </div>
+        </aside>
+
+        <div class="hero-copy">
           <h1 class="hero-title">
-            <span class="lang zh"><span data-bind="name_zh">李林峰</span> / <span data-bind="name_en">Linfeng Li</span></span>
-            <span class="lang en"><span data-bind="name_en">Linfeng Li</span> / <span data-bind="name_zh">李林峰</span></span>
+            <span class="lang zh"><span class="hero-latin" data-bind="name_en">Linfeng Li</span>（<span data-bind="name_zh">李林峰</span>）</span>
+            <span class="lang en"><span class="hero-latin" data-bind="name_en">Linfeng Li</span> (<span data-bind="name_zh">李林峰</span>)</span>
           </h1>
           <p class="hero-subtitle">
-            <span class="lang zh" data-bind="title_zh">南方科技大学地球物理学博士</span>
-            <span class="lang en" data-bind="title_en">Ph.D. in Geophysics, SUSTech</span>
+            <span class="lang zh" data-bind="title_zh">地球物理学硕士研究生</span>
+            <span class="lang en" data-bind="title_en">M.S. Student in Geophysics</span>
           </p>
-
-          <div class="profile-info">
+          <p class="hero-subtitle">
+            <span class="lang zh" data-bind="school_zh">南方科技大学</span>
+            <span class="lang en" data-bind="school_en">Southern University of Science and Technology</span>
+          </p>
+          <div class="hero-contact-list">
             <p>
-              <strong><span class="lang zh">学校：</span><span class="lang en">School:</span></strong>
-              <span class="lang zh" data-bind="school_zh">南方科技大学</span>
-              <span class="lang en" data-bind="school_en">Southern University of Science and Technology</span>
+              <strong>Email:</strong>
+              <span data-bind="contact_email">12432261@mail.sustech.edu.cn</span>
+            </p>
+            <p>
+              <strong><span class="lang zh">电话：</span><span class="lang en">Phone:</span></strong>
+              <span data-bind="phone">+86 13481156117</span>
             </p>
             <p>
               <strong><span class="lang zh">城市：</span><span class="lang en">City:</span></strong>
               <span class="lang zh" data-bind="city_zh">中国广东省深圳市</span>
               <span class="lang en" data-bind="city_en">Shenzhen, Guangdong, China</span>
             </p>
-            <p>
-              <strong>Email:</strong>
-              <span data-bind="contact_email">your-email@example.com</span>
-            </p>
-            <p>
-              <strong><span class="lang zh">电话：</span><span class="lang en">Phone:</span></strong>
-              <span data-bind="phone">13481156117</span>
-            </p>
           </div>
         </div>
+      </div>
+    </section>
 
-        <aside class="panel avatar-card">
-          <div class="avatar-frame">
-            <img src="assets/img/avatar-placeholder.svg" alt="Profile avatar" data-avatar-image>
-          </div>
-          <div class="upload-tools">
-            <button class="btn primary" type="button" data-avatar-trigger>
-              <span class="lang zh">上传头像</span>
-              <span class="lang en">Upload Avatar</span>
-            </button>
-            <button class="btn subtle" type="button" data-avatar-reset>
-              <span class="lang zh">重置</span>
-              <span class="lang en">Reset</span>
-            </button>
-            <input class="file-input" type="file" accept="image/*" data-avatar-input>
-          </div>
-          <small data-avatar-status>
-            <span class="lang zh">支持 JPG/PNG，最大 5MB，保存在当前浏览器。</span>
-            <span class="lang en">Supports JPG/PNG up to 5MB, saved in current browser.</span>
-          </small>
-        </aside>
-      </section>
-
-      <section class="panel section-nav reveal" aria-label="Section navigation">
+    <section class="section-nav-shell reveal" aria-label="Section navigation">
+      <div class="container">
         <nav class="section-nav-inner">
           <a class="nav-link" href="#home"><span class="lang zh">主页</span><span class="lang en">Home</span></a>
           <a class="nav-link" href="#education"><span class="lang zh">教育经历</span><span class="lang en">Education</span></a>
-          <a class="nav-link" href="#research"><span class="lang zh">研究方向</span><span class="lang en">Research Directions</span></a>
+          <a class="nav-link" href="#research"><span class="lang zh">研究方向</span><span class="lang en">Research</span></a>
           <a class="nav-link" href="#skills"><span class="lang zh">技能</span><span class="lang en">Skills</span></a>
           <a class="nav-link" href="#certificates"><span class="lang zh">证书</span><span class="lang en">Certificates</span></a>
+          <a class="nav-link" href="#publications"><span class="lang zh">出版论文</span><span class="lang en">Publications</span></a>
           <a class="nav-link" href="#contact"><span class="lang zh">联系</span><span class="lang en">Contact</span></a>
         </nav>
-      </section>
+      </div>
+    </section>
 
+    <div class="container section-stack">
       <section id="education" class="panel card reveal">
-        <h2><span class="lang zh">教育经历</span><span class="lang en">Education Journey</span></h2>
-        <p class="page-lead"><span class="lang zh" data-bind="edu_intro_zh">从高中到博士阶段的完整学术路径。</span><span class="lang en" data-bind="edu_intro_en">A complete academic path from high school to doctoral studies.</span></p>
+        <h2><span class="lang zh">教育经历</span><span class="lang en">Education</span></h2>
+        <p class="page-lead"><span class="lang zh" data-bind="edu_intro_zh">围绕地球物理方向的系统学习路径。</span><span class="lang en" data-bind="edu_intro_en">Systematic academic training focused on geophysics.</span></p>
         <ol class="timeline" style="margin-top:0.9rem;">
-          <li>
-            <h3><span class="lang zh" data-bind="edu1_zh">广西大学附属中学</span><span class="lang en" data-bind="edu1_en">High School Affiliated to Guangxi University</span></h3>
-            <p><span class="lang zh" data-bind="edu1_desc_zh">高中阶段，完成基础学科训练并形成科学兴趣。</span><span class="lang en" data-bind="edu1_desc_en">Built solid fundamentals and developed early scientific interest.</span></p>
+          <li data-entry-prefix="edu1">
+            <div class="entry-main">
+              <h3><span class="lang zh" data-bind="edu1_zh">南方科技大学</span><span class="lang en" data-bind="edu1_en">Southern University of Science and Technology</span></h3>
+              <p><span class="lang zh" data-bind="edu1_desc_zh">理学硕士，地球物理</span><span class="lang en" data-bind="edu1_desc_en">M.S., Geophysics</span></p>
+            </div>
+            <div class="entry-side">
+              <p><span class="lang zh" data-bind="edu1_location_zh">中国深圳</span><span class="lang en" data-bind="edu1_location_en">Shenzhen, China</span></p>
+              <p class="entry-date" data-bind="edu1_date">2024.09 - 至今</p>
+            </div>
           </li>
-          <li>
-            <h3><span class="lang zh" data-bind="edu2_zh">长江大学（武汉校区）</span><span class="lang en" data-bind="edu2_en">Yangtze University (Wuhan Campus)</span></h3>
-            <p><span class="lang zh" data-bind="edu2_desc_zh">本科阶段，打下专业课程与工程实践基础。</span><span class="lang en" data-bind="edu2_desc_en">Undergraduate stage focused on disciplinary courses and engineering practice.</span></p>
+          <li data-entry-prefix="edu2">
+            <div class="entry-main">
+              <h3><span class="lang zh" data-bind="edu2_zh">长江大学</span><span class="lang en" data-bind="edu2_en">Yangtze University</span></h3>
+              <p><span class="lang zh" data-bind="edu2_desc_zh">理学学士，地球物理</span><span class="lang en" data-bind="edu2_desc_en">B.S., Geophysics</span></p>
+            </div>
+            <div class="entry-side">
+              <p><span class="lang zh" data-bind="edu2_location_zh">中国武汉</span><span class="lang en" data-bind="edu2_location_en">Wuhan, China</span></p>
+              <p class="entry-date" data-bind="edu2_date">2020.09 - 2024.06</p>
+            </div>
           </li>
-          <li>
-            <h3><span class="lang zh" data-bind="edu3_zh">南方科技大学（硕士、博士）</span><span class="lang en" data-bind="edu3_en">SUSTech (Master and Ph.D.)</span></h3>
-            <p><span class="lang zh" data-bind="edu3_desc_zh">硕士和博士阶段，专注地球物理研究与科学计算。</span><span class="lang en" data-bind="edu3_desc_en">Master and doctoral stages focused on geophysics research and scientific computing.</span></p>
+          <li data-entry-prefix="edu3">
+            <div class="entry-main">
+              <h3><span class="lang zh" data-bind="edu3_zh"></span><span class="lang en" data-bind="edu3_en"></span></h3>
+              <p><span class="lang zh" data-bind="edu3_desc_zh"></span><span class="lang en" data-bind="edu3_desc_en"></span></p>
+            </div>
+            <div class="entry-side">
+              <p><span class="lang zh" data-bind="edu3_location_zh"></span><span class="lang en" data-bind="edu3_location_en"></span></p>
+              <p class="entry-date" data-bind="edu3_date"></p>
+            </div>
           </li>
         </ol>
       </section>
@@ -118,81 +124,71 @@
       <section id="research" class="panel card reveal">
         <h2><span class="lang zh">研究方向</span><span class="lang en">Research Directions</span></h2>
         <div class="research-list" style="margin-top:0.75rem;">
-          <article class="card research-row">
-            <h3><span class="lang zh" data-bind="res1_zh">地球物理数值模拟</span><span class="lang en" data-bind="res1_en">Geophysical Numerical Simulation</span></h3>
-            <p><span class="lang zh" data-bind="res1_desc_zh">研究波动传播、离散算法和稳定性分析。</span><span class="lang en" data-bind="res1_desc_en">Study wave propagation, discretization schemes, and stability analysis.</span></p>
+          <article class="card research-row" data-entry-prefix="res1">
+            <div class="entry-main">
+              <h3><span class="lang zh" data-bind="res1_zh">基于高密度电法的人体组织成像</span><span class="lang en" data-bind="res1_en">Human Tissue Imaging with High-Density Electrical Methods</span></h3>
+              <p><span class="lang zh" data-bind="res1_desc_zh">通过高密度电极阵列与有限差分正演，实现人体组织与含水状态的电阻率高分辨成像。</span><span class="lang en" data-bind="res1_desc_en">Built high-density electrode workflows and finite-difference modeling to image tissue structure and hydration changes via resistivity contrasts.</span></p>
+            </div>
+            <div class="entry-side">
+              <p><span class="lang zh" data-bind="res1_location_zh">南方科技大学</span><span class="lang en" data-bind="res1_location_en">SUSTech</span></p>
+              <p class="entry-date" data-bind="res1_date">2024.09 - 至今</p>
+            </div>
           </article>
-          <article class="card research-row">
-            <h3><span class="lang zh" data-bind="res2_zh">科学计算与建模</span><span class="lang en" data-bind="res2_en">Scientific Computing & Modeling</span></h3>
-            <p><span class="lang zh" data-bind="res2_desc_zh">使用 MATLAB/Python 进行模型构建和实验验证。</span><span class="lang en" data-bind="res2_desc_en">Use MATLAB/Python for model building and experimental verification.</span></p>
+          <article class="card research-row" data-entry-prefix="res2">
+            <div class="entry-main">
+              <h3><span class="lang zh" data-bind="res2_zh">水化合物实验与电阻率反演</span><span class="lang en" data-bind="res2_en">Hydrate Experiments and Resistivity Inversion</span></h3>
+              <p><span class="lang zh" data-bind="res2_desc_zh">搭建高压压实砂样实验，结合天然气与盐水饱和差异，反演海底天然气分布。</span><span class="lang en" data-bind="res2_desc_en">Designed compaction experiments on quartz sands and inverted resistivity contrasts between gas and brine saturation for gas-distribution mapping.</span></p>
+            </div>
+            <div class="entry-side">
+              <p><span class="lang zh" data-bind="res2_location_zh">南方科技大学</span><span class="lang en" data-bind="res2_location_en">SUSTech</span></p>
+              <p class="entry-date" data-bind="res2_date">2025.10 - 至今</p>
+            </div>
           </article>
-          <article class="card research-row">
-            <h3><span class="lang zh" data-bind="res3_zh">方法优化</span><span class="lang en" data-bind="res3_en">Method Optimization</span></h3>
-            <p><span class="lang zh" data-bind="res3_desc_zh">面向复杂地学场景优化计算流程和效率。</span><span class="lang en" data-bind="res3_desc_en">Optimize workflows and efficiency for complex geoscience scenarios.</span></p>
+          <article class="card research-row" data-entry-prefix="res3">
+            <div class="entry-main">
+              <h3><span class="lang zh" data-bind="res3_zh">MT实时动态监测系统与软件开发</span><span class="lang en" data-bind="res3_en">Real-Time MT Monitoring System and Software Development</span></h3>
+              <p><span class="lang zh" data-bind="res3_desc_zh">构建4G传输到Linux集群的实时监测平台，并基于PyQt/Python实现远程可视化与即时分析。</span><span class="lang en" data-bind="res3_desc_en">Implemented a 4G-to-Linux cluster real-time MT platform with PyQt/Python tools for remote visualization and instant analysis.</span></p>
+            </div>
+            <div class="entry-side">
+              <p><span class="lang zh" data-bind="res3_location_zh">长江大学</span><span class="lang en" data-bind="res3_location_en">Yangtze University</span></p>
+              <p class="entry-date" data-bind="res3_date">2023.05 - 2024.05</p>
+            </div>
+          </article>
+          <article class="card research-row" data-entry-prefix="res4">
+            <div class="entry-main">
+              <h3><span class="lang zh" data-bind="res4_zh">基于井震资料地电模型建模与软件实现</span><span class="lang en" data-bind="res4_en">Geoelectric Modeling from Seismic and Well-Logging Data</span></h3>
+              <p><span class="lang zh" data-bind="res4_desc_zh">读取井震数据并转换地形结构，在 COMSOL 中完成分层电阻率有限元正演，开发 PyQt 软件以实现高效处理与可视化。</span><span class="lang en" data-bind="res4_desc_en">Converted seismic and well-logging data into layered terrain models, built FEM forward models in COMSOL, and developed a PyQt tool for processing and visualization.</span></p>
+            </div>
+            <div class="entry-side">
+              <p><span class="lang zh" data-bind="res4_location_zh">长江大学</span><span class="lang en" data-bind="res4_location_en">Yangtze University</span></p>
+              <p class="entry-date" data-bind="res4_date">2023.05 - 2024.06</p>
+            </div>
           </article>
         </div>
       </section>
 
       <section id="skills" class="panel card reveal">
-        <h2><span class="lang zh">技能矩阵</span><span class="lang en">Skill Matrix</span></h2>
-        <div class="grid cols-3" style="margin-top:0.75rem;">
-          <article class="card">
-            <h3>MATLAB</h3>
-            <p><span class="lang zh">用于数值模拟、算法验证和可视化。</span><span class="lang en">For numerical simulation, algorithm validation, and visualization.</span></p>
-            <div class="skill-meter"><div class="meter-track"><div class="meter-fill" style="width:88%;"></div></div></div>
-          </article>
-          <article class="card">
-            <h3>Python</h3>
-            <p><span class="lang zh">用于数据分析、自动化脚本和实验流程管理。</span><span class="lang en">For data analysis, automation scripts, and workflow management.</span></p>
-            <div class="skill-meter"><div class="meter-track"><div class="meter-fill" style="width:80%;"></div></div></div>
-          </article>
-          <article class="card">
-            <h3><span class="lang zh">乒乓球</span><span class="lang en">Table Tennis</span></h3>
-            <p><span class="lang zh">强调反应速度、专注力和长期训练能力。</span><span class="lang en">Emphasizes reaction, concentration, and long-term discipline.</span></p>
-            <div class="skill-meter"><div class="meter-track"><div class="meter-fill" style="width:76%;"></div></div></div>
-          </article>
-        </div>
+        <h2><span class="lang zh">专业技能</span><span class="lang en">Skills</span></h2>
+        <div class="research-list" style="margin-top:0.75rem;" data-list="skills"></div>
+        <p class="empty" data-list-empty="skills">
+          <span class="lang zh">暂无技能记录。</span><span class="lang en">No skill records yet.</span>
+        </p>
       </section>
 
-      <section id="certificates" class="section-stack reveal">
-        <section class="panel card" data-cert-manager="matlab">
-          <h2>MATLAB <span class="lang zh">证书/奖项</span><span class="lang en">Certificates/Awards</span></h2>
-          <form class="cert-form" autocomplete="off">
-            <input class="input" type="text" name="name" placeholder="Certificate / Award Name" required>
-            <input class="input" type="text" name="issuer" placeholder="Issuer">
-            <input class="input" type="text" name="date" placeholder="Date">
-            <input class="input" type="url" name="link" placeholder="Link (optional)">
-            <button class="btn primary" type="submit"><span class="lang zh">添加</span><span class="lang en">Add</span></button>
-          </form>
-          <p class="empty"><span class="lang zh">暂无记录。</span><span class="lang en">No records yet.</span></p>
-          <ul class="list cert-list"></ul>
-        </section>
+      <section id="certificates" class="panel card reveal">
+        <h2><span class="lang zh">证书与奖项</span><span class="lang en">Certificates & Awards</span></h2>
+        <div class="research-list" style="margin-top:0.75rem;" data-list="certificates"></div>
+        <p class="empty" data-list-empty="certificates">
+          <span class="lang zh">暂无证书记录。</span><span class="lang en">No certificate records yet.</span>
+        </p>
+      </section>
 
-        <section class="panel card" data-cert-manager="python">
-          <h2>Python <span class="lang zh">证书/奖项</span><span class="lang en">Certificates/Awards</span></h2>
-          <form class="cert-form" autocomplete="off">
-            <input class="input" type="text" name="name" placeholder="Certificate / Award Name" required>
-            <input class="input" type="text" name="issuer" placeholder="Issuer">
-            <input class="input" type="text" name="date" placeholder="Date">
-            <input class="input" type="url" name="link" placeholder="Link (optional)">
-            <button class="btn primary" type="submit"><span class="lang zh">添加</span><span class="lang en">Add</span></button>
-          </form>
-          <p class="empty"><span class="lang zh">暂无记录。</span><span class="lang en">No records yet.</span></p>
-          <ul class="list cert-list"></ul>
-        </section>
-
-        <section class="panel card" data-cert-manager="tabletennis">
-          <h2><span class="lang zh">乒乓球证书/奖项</span><span class="lang en">Table Tennis Certificates/Awards</span></h2>
-          <form class="cert-form" autocomplete="off">
-            <input class="input" type="text" name="name" placeholder="Certificate / Award Name" required>
-            <input class="input" type="text" name="issuer" placeholder="Issuer">
-            <input class="input" type="text" name="date" placeholder="Date">
-            <input class="input" type="url" name="link" placeholder="Link (optional)">
-            <button class="btn primary" type="submit"><span class="lang zh">添加</span><span class="lang en">Add</span></button>
-          </form>
-          <p class="empty"><span class="lang zh">暂无记录。</span><span class="lang en">No records yet.</span></p>
-          <ul class="list cert-list"></ul>
-        </section>
+      <section id="publications" class="panel card reveal">
+        <h2><span class="lang zh">出版论文</span><span class="lang en">Publications</span></h2>
+        <div class="research-list" style="margin-top:0.75rem;" data-list="publications"></div>
+        <p class="empty" data-list-empty="publications">
+          <span class="lang zh">暂无论文记录。</span><span class="lang en">No publication records yet.</span>
+        </p>
       </section>
 
       <section id="contact" class="grid cols-2 reveal">
@@ -200,10 +196,10 @@
           <h2><span class="lang zh">联系方式</span><span class="lang en">Contact Details</span></h2>
           <p><strong><span class="lang zh">姓名：</span><span class="lang en">Name:</span></strong> <span data-bind="name_en">Linfeng Li</span></p>
           <p><strong><span class="lang zh">学校：</span><span class="lang en">School:</span></strong> <span class="lang zh" data-bind="school_zh">南方科技大学</span><span class="lang en" data-bind="school_en">Southern University of Science and Technology</span></p>
-          <p><strong><span class="lang zh">头衔：</span><span class="lang en">Title:</span></strong> <span class="lang zh" data-bind="title_zh">南方科技大学地球物理学博士</span><span class="lang en" data-bind="title_en">Ph.D. in Geophysics, SUSTech</span></p>
+          <p><strong><span class="lang zh">头衔：</span><span class="lang en">Title:</span></strong> <span class="lang zh" data-bind="title_zh">地球物理学硕士研究生</span><span class="lang en" data-bind="title_en">M.S. Student in Geophysics</span></p>
           <p><strong><span class="lang zh">城市：</span><span class="lang en">City:</span></strong> <span class="lang zh" data-bind="city_zh">中国广东省深圳市</span><span class="lang en" data-bind="city_en">Shenzhen, Guangdong, China</span></p>
-          <p><strong><span class="lang zh">电话：</span><span class="lang en">Phone:</span></strong> <span data-bind="phone">13481156117</span></p>
-          <p><strong>Email:</strong> <span data-bind="contact_email">your-email@example.com</span></p>
+          <p><strong><span class="lang zh">电话：</span><span class="lang en">Phone:</span></strong> <span data-bind="phone">+86 13481156117</span></p>
+          <p><strong>Email:</strong> <span data-bind="contact_email">12432261@mail.sustech.edu.cn</span></p>
         </article>
 
         <article class="panel card">
@@ -244,7 +240,7 @@
     </div>
     <div class="admin-body">
       <section class="admin-section" data-admin-auth>
-        <p class="admin-note"><span class="lang zh">首次使用先设置密码，之后输入密码登录。仅登录状态可编辑。</span><span class="lang en">Set a password on first use, then log in to edit.</span></p>
+        <p class="admin-note"><span class="lang zh">管理员默认密码已预置为：LLf200182（可登录后修改）。</span><span class="lang en">Default admin password is preset to: LLf200182 (you can change it after login).</span></p>
         <div class="admin-grid">
           <input class="input" type="password" placeholder="Admin Password" data-admin-password>
           <button class="btn primary" type="button" data-admin-login>
@@ -252,9 +248,6 @@
           </button>
         </div>
         <div class="admin-actions" style="margin-top:0.55rem;">
-          <button class="btn" type="button" data-admin-setup>
-            <span class="lang zh">首次设置密码</span><span class="lang en">Set Initial Password</span>
-          </button>
           <button class="btn subtle" type="button" data-admin-change hidden>
             <span class="lang zh">修改密码</span><span class="lang en">Change Password</span>
           </button>
@@ -263,8 +256,107 @@
       </section>
 
       <section class="admin-section" data-admin-editor hidden>
-        <h3 style="margin-top:0;"><span class="lang zh">网站信息编辑</span><span class="lang en">Website Content Editor</span></h3>
-        <div class="admin-grid" data-admin-fields></div>
+        <h3 style="margin-top:0;"><span class="lang zh">网站管理后台</span><span class="lang en">Website Admin</span></h3>
+
+        <div class="admin-stack">
+          <section class="admin-block">
+            <h4><span class="lang zh">头像管理</span><span class="lang en">Avatar</span></h4>
+            <div class="admin-avatar-box">
+              <p class="admin-note"><span class="lang zh">头像仅管理员可设置，修改后自动保存。</span><span class="lang en">Avatar can only be changed by admin and is saved automatically.</span></p>
+              <div class="admin-actions">
+                <button class="btn" type="button" data-admin-avatar-upload>
+                  <span class="lang zh">上传头像</span><span class="lang en">Upload Avatar</span>
+                </button>
+                <button class="btn subtle" type="button" data-admin-avatar-reset>
+                  <span class="lang zh">重置头像</span><span class="lang en">Reset Avatar</span>
+                </button>
+                <input class="file-input" type="file" accept="image/*" hidden data-admin-avatar-input>
+              </div>
+              <p class="admin-note" data-admin-avatar-status></p>
+            </div>
+          </section>
+
+          <section class="admin-block">
+            <h4><span class="lang zh">基础信息条目管理</span><span class="lang en">Basic Info Item Management</span></h4>
+            <div data-admin-fields-group="basic"></div>
+          </section>
+
+          <section class="admin-block">
+            <h4><span class="lang zh">教育经历条目管理</span><span class="lang en">Education Item Management</span></h4>
+            <div data-admin-fields-group="education"></div>
+          </section>
+
+          <section class="admin-block">
+            <h4><span class="lang zh">研究方向条目管理</span><span class="lang en">Research Item Management</span></h4>
+            <div data-admin-fields-group="research"></div>
+          </section>
+
+          <section class="admin-block" data-admin-collection="skills">
+            <h4><span class="lang zh">技能条目管理</span><span class="lang en">Skill Items</span></h4>
+            <form class="admin-list-form" data-admin-collection-form autocomplete="off">
+              <input class="input" name="title_zh" placeholder="标题（中文）" required>
+              <input class="input" name="title_en" placeholder="Title (English)">
+              <textarea class="input" name="desc_zh" rows="3" placeholder="描述（中文）"></textarea>
+              <textarea class="input" name="desc_en" rows="3" placeholder="Description (English)"></textarea>
+              <input class="input" name="org_zh" placeholder="机构/说明（中文）">
+              <input class="input" name="org_en" placeholder="Organization/Meta (English)">
+              <input class="input" name="date" placeholder="日期（例：2025.10）">
+              <input class="input" name="link" placeholder="链接（可选）">
+              <button class="btn primary" type="submit" data-admin-collection-submit>
+                <span class="lang zh">新增条目</span><span class="lang en">Add Item</span>
+              </button>
+              <button class="btn subtle" type="button" hidden data-admin-collection-cancel>
+                <span class="lang zh">取消编辑</span><span class="lang en">Cancel Edit</span>
+              </button>
+            </form>
+            <p class="empty" data-admin-collection-empty><span class="lang zh">暂无条目。</span><span class="lang en">No items yet.</span></p>
+            <ul class="list" data-admin-collection-list></ul>
+          </section>
+
+          <section class="admin-block" data-admin-collection="certificates">
+            <h4><span class="lang zh">证书条目管理</span><span class="lang en">Certificate Items</span></h4>
+            <form class="admin-list-form" data-admin-collection-form autocomplete="off">
+              <input class="input" name="title_zh" placeholder="标题（中文）" required>
+              <input class="input" name="title_en" placeholder="Title (English)">
+              <textarea class="input" name="desc_zh" rows="3" placeholder="描述（中文）"></textarea>
+              <textarea class="input" name="desc_en" rows="3" placeholder="Description (English)"></textarea>
+              <input class="input" name="org_zh" placeholder="颁发机构（中文）">
+              <input class="input" name="org_en" placeholder="Issuer (English)">
+              <input class="input" name="date" placeholder="日期（例：2025.10）">
+              <input class="input" name="link" placeholder="链接（可选）">
+              <button class="btn primary" type="submit" data-admin-collection-submit>
+                <span class="lang zh">新增条目</span><span class="lang en">Add Item</span>
+              </button>
+              <button class="btn subtle" type="button" hidden data-admin-collection-cancel>
+                <span class="lang zh">取消编辑</span><span class="lang en">Cancel Edit</span>
+              </button>
+            </form>
+            <p class="empty" data-admin-collection-empty><span class="lang zh">暂无条目。</span><span class="lang en">No items yet.</span></p>
+            <ul class="list" data-admin-collection-list></ul>
+          </section>
+
+          <section class="admin-block" data-admin-collection="publications">
+            <h4><span class="lang zh">论文条目管理</span><span class="lang en">Publication Items</span></h4>
+            <form class="admin-list-form" data-admin-collection-form autocomplete="off">
+              <input class="input" name="title_zh" placeholder="标题（中文）" required>
+              <input class="input" name="title_en" placeholder="Title (English)">
+              <textarea class="input" name="desc_zh" rows="3" placeholder="描述（中文）"></textarea>
+              <textarea class="input" name="desc_en" rows="3" placeholder="Description (English)"></textarea>
+              <input class="input" name="org_zh" placeholder="期刊/会议（中文）">
+              <input class="input" name="org_en" placeholder="Journal/Venue (English)">
+              <input class="input" name="date" placeholder="日期（例：2025.10）">
+              <input class="input" name="link" placeholder="链接（可选）">
+              <button class="btn primary" type="submit" data-admin-collection-submit>
+                <span class="lang zh">新增条目</span><span class="lang en">Add Item</span>
+              </button>
+              <button class="btn subtle" type="button" hidden data-admin-collection-cancel>
+                <span class="lang zh">取消编辑</span><span class="lang en">Cancel Edit</span>
+              </button>
+            </form>
+            <p class="empty" data-admin-collection-empty><span class="lang zh">暂无条目。</span><span class="lang en">No items yet.</span></p>
+            <ul class="list" data-admin-collection-list></ul>
+          </section>
+        </div>
 
         <div class="admin-actions" style="margin-top:0.8rem;">
           <button class="btn primary" type="button" data-admin-save>
