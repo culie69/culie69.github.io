@@ -36,7 +36,7 @@
   "edu3_date": "2024.09",
   "res1_zh": "基于高密度电法的人体含水量分析",
   "res1_en": "Human body water content analysis based on high-density electrical resistivity tomography",
-  "res1_desc_zh": "通过在皮肤上部署高密度电极阵列，并采用偶极-偶极激励的有限差分正向建模，该方法利用组织间固有的生物电阻抗差异，实现高\n分辨率区分，并通过时空电阻率变化准确量化区域和全身含水量。",
+  "res1_desc_zh": "通过在皮肤上部署高密度电极阵列，并采用偶极-偶极激励的有限差分正向建模，该方法利用组织间固有的生物电阻抗差异，实现高分辨率区分，并通过时空电阻率变化准确量化区域和全身含水量。",
   "res1_desc_en": "By deploying a high-density electrode array on the skin and employing finite-difference forward modeling with dipole-dipole excitation, this method leverages the inherent bioelectrical impedance differences between tissues to achieve high-resolution differentiation and accurately quantifies regional and systemic water content through spatiotemporal resistivity changes.",
   "res1_location_zh": "南方科技大学",
   "res1_location_en": "SUSTech",
