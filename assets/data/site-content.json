@@ -62,6 +62,14 @@
   "res4_location_zh": "长江大学",
   "res4_location_en": "Yangtze University",
   "res4_date": "2023.05 - 2024.06",
+  "section_order": [
+    "education",
+    "research",
+    "publications",
+    "skills",
+    "certificates",
+    "contact"
+  ],
   "skills": [
     {
       "title_zh": "MATLAB / Python",
