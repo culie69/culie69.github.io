@@ -6,12 +6,21 @@
     siteContent: 'll_site_content',
     adminHash: 'll_admin_password_hash',
     adminSession: 'll_admin_session',
-    adminCustom: 'll_admin_custom_password'
+    adminCustom: 'll_admin_custom_password',
+    publishConfig: 'll_github_publish_config'
   };
 
   const DEFAULT_ADMIN_HASH = '9d88dcf23ddc8847acde16ffd32fd569525f0b5f1ef12a5ca8a3415089e9b889';
   const AVATAR_PLACEHOLDER = 'assets/img/avatar-placeholder.svg';
   const COLLECTION_KEYS = ['skills', 'certificates', 'publications'];
+  const PUBLISHED_CONTENT_URL = 'assets/data/site-content.json';
+  const DEFAULT_PUBLISH_CONFIG = {
+    owner: 'culie69',
+    repo: 'culie69.github.io',
+    branch: 'main',
+    path: 'assets/data/site-content.json',
+    token: ''
+  };
 
   const DEFAULT_CONTENT = {
     name_zh: '李林峰',
@@ -377,18 +386,33 @@
     return base;
   }
 
-  function loadSiteContent() {
+  function loadDraftSiteContent() {
     try {
       const rawText = localStorage.getItem(STORAGE_KEYS.siteContent);
       const raw = rawText ? JSON.parse(rawText) : {};
       return mergeSiteContent(raw);
     } catch (error) {
-      return mergeSiteContent({});
+      return null;
     }
   }
 
   function saveSiteContent(content) {
     localStorage.setItem(STORAGE_KEYS.siteContent, JSON.stringify(content));
+  }
+
+  async function loadPublishedSiteContent() {
+    try {
+      const response = await fetch(`${PUBLISHED_CONTENT_URL}?t=${Date.now()}`, {
+        cache: 'no-store'
+      });
+      if (!response.ok) {
+        return null;
+      }
+      const parsed = await response.json();
+      return mergeSiteContent(parsed);
+    } catch (error) {
+      return null;
+    }
   }
 
   function escapeHtml(value) {
@@ -525,8 +549,10 @@
     renderCollectionPublic('publications', content.publications);
   }
 
-  function initSiteContent() {
-    siteContent = loadSiteContent();
+  async function initSiteContent() {
+    const draft = loadDraftSiteContent();
+    const published = await loadPublishedSiteContent();
+    siteContent = published || draft || mergeSiteContent({});
     applySiteContent(siteContent);
   }
 
@@ -540,6 +566,106 @@
     return Array.from(new Uint8Array(digest))
       .map((b) => b.toString(16).padStart(2, '0'))
       .join('');
+  }
+
+  function loadPublishConfig() {
+    try {
+      const rawText = localStorage.getItem(STORAGE_KEYS.publishConfig);
+      const raw = rawText ? JSON.parse(rawText) : {};
+      return {
+        owner: String(raw.owner || DEFAULT_PUBLISH_CONFIG.owner),
+        repo: String(raw.repo || DEFAULT_PUBLISH_CONFIG.repo),
+        branch: String(raw.branch || DEFAULT_PUBLISH_CONFIG.branch),
+        path: String(raw.path || DEFAULT_PUBLISH_CONFIG.path),
+        token: String(raw.token || DEFAULT_PUBLISH_CONFIG.token)
+      };
+    } catch (error) {
+      return { ...DEFAULT_PUBLISH_CONFIG };
+    }
+  }
+
+  function savePublishConfig(config) {
+    const data = {
+      owner: String(config.owner || ''),
+      repo: String(config.repo || ''),
+      branch: String(config.branch || ''),
+      path: String(config.path || ''),
+      token: String(config.token || '')
+    };
+    localStorage.setItem(STORAGE_KEYS.publishConfig, JSON.stringify(data));
+  }
+
+  function encodePathForGitHub(pathText) {
+    return String(pathText || '')
+      .split('/')
+      .filter(Boolean)
+      .map((segment) => encodeURIComponent(segment))
+      .join('/');
+  }
+
+  function toBase64Utf8(text) {
+    const bytes = new TextEncoder().encode(String(text || ''));
+    let binary = '';
+    bytes.forEach((b) => {
+      binary += String.fromCharCode(b);
+    });
+    return btoa(binary);
+  }
+
+  async function publishSiteContentToGitHub(config, content) {
+    const owner = String(config.owner || '').trim();
+    const repo = String(config.repo || '').trim();
+    const branch = String(config.branch || '').trim();
+    const path = String(config.path || '').trim();
+    const token = String(config.token || '').trim();
+
+    if (!owner || !repo || !branch || !path || !token) {
+      throw new Error('发布参数不完整，请检查 owner/repo/branch/path/token。');
+    }
+
+    const encodedPath = encodePathForGitHub(path);
+    const endpoint = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodedPath}`;
+    const headers = {
+      Accept: 'application/vnd.github+json',
+      Authorization: `Bearer ${token}`,
+      'X-GitHub-Api-Version': '2022-11-28'
+    };
+
+    let sha = '';
+    const readResp = await fetch(`${endpoint}?ref=${encodeURIComponent(branch)}`, {
+      method: 'GET',
+      headers
+    });
+    if (readResp.ok) {
+      const readData = await readResp.json();
+      sha = String(readData.sha || '');
+    } else if (readResp.status !== 404) {
+      throw new Error(`读取远端内容失败（${readResp.status}）。`);
+    }
+
+    const payloadText = JSON.stringify(content, null, 2);
+    const body = {
+      message: `Update site content ${new Date().toISOString()}`,
+      content: toBase64Utf8(payloadText),
+      branch
+    };
+    if (sha) {
+      body.sha = sha;
+    }
+
+    const writeResp = await fetch(endpoint, {
+      method: 'PUT',
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+    if (!writeResp.ok) {
+      const errText = await writeResp.text();
+      throw new Error(`发布失败（${writeResp.status}）：${errText.slice(0, 180)}`);
+    }
+    return writeResp.json();
   }
 
   function initAdminPanel() {
@@ -566,6 +692,13 @@
     const avatarResetBtn = document.querySelector('[data-admin-avatar-reset]');
     const avatarInput = document.querySelector('[data-admin-avatar-input]');
     const avatarStatus = document.querySelector('[data-admin-avatar-status]');
+    const publishOwnerInput = document.querySelector('[data-admin-publish-owner]');
+    const publishRepoInput = document.querySelector('[data-admin-publish-repo]');
+    const publishBranchInput = document.querySelector('[data-admin-publish-branch]');
+    const publishPathInput = document.querySelector('[data-admin-publish-path]');
+    const publishTokenInput = document.querySelector('[data-admin-publish-token]');
+    const publishBtn = document.querySelector('[data-admin-publish]');
+    const publishStatus = document.querySelector('[data-admin-publish-status]');
 
     if (!panel || !editorWrap || fieldGroupWraps.length === 0) {
       return;
@@ -597,8 +730,30 @@
       }
     };
 
+    const setPublishStatus = (text) => {
+      if (publishStatus) {
+        publishStatus.textContent = text;
+      }
+    };
+
     const isLoggedIn = () => localStorage.getItem(STORAGE_KEYS.adminSession) === '1';
     const hasPassword = () => !!localStorage.getItem(STORAGE_KEYS.adminHash);
+
+    const fillPublishConfig = (config) => {
+      if (publishOwnerInput) publishOwnerInput.value = config.owner || '';
+      if (publishRepoInput) publishRepoInput.value = config.repo || '';
+      if (publishBranchInput) publishBranchInput.value = config.branch || '';
+      if (publishPathInput) publishPathInput.value = config.path || '';
+      if (publishTokenInput) publishTokenInput.value = config.token || '';
+    };
+
+    const readPublishConfig = () => ({
+      owner: publishOwnerInput ? publishOwnerInput.value.trim() : '',
+      repo: publishRepoInput ? publishRepoInput.value.trim() : '',
+      branch: publishBranchInput ? publishBranchInput.value.trim() : '',
+      path: publishPathInput ? publishPathInput.value.trim() : '',
+      token: publishTokenInput ? publishTokenInput.value.trim() : ''
+    });
 
     const buildFieldForm = () => {
       Object.values(fieldGroupMap).forEach((wrap) => {
@@ -754,7 +909,7 @@
           saveSiteContent(siteContent);
           applySiteContent(siteContent);
           renderAdminList();
-          setEditStatus(successText);
+          setEditStatus(`${successText}（已保存本地草稿，需发布到 GitHub 后访客可见）`);
         };
 
         form.addEventListener('submit', (event) => {
@@ -846,6 +1001,7 @@
 
     buildFieldForm();
     fillFields();
+    fillPublishConfig(loadPublishConfig());
     bindCollectionManagers();
     refreshAuthView();
 
@@ -897,7 +1053,7 @@
         siteContent = readFields();
         saveSiteContent(siteContent);
         applySiteContent(siteContent);
-        setEditStatus('页面文本保存成功。');
+        setEditStatus('页面文本已保存为本地草稿，请点击“发布到GitHub”同步给所有访客。');
       });
 
     resetBtn &&
@@ -914,7 +1070,7 @@
         applySiteContent(siteContent);
         fillFields();
         adminCollectionRenderers.forEach((render) => render());
-        setEditStatus('已恢复默认内容。');
+        setEditStatus('已恢复默认内容（本地草稿），请发布到 GitHub 使访客同步。');
         setAvatarStatus('头像已恢复默认。');
       });
 
@@ -956,13 +1112,40 @@
             applySiteContent(siteContent);
             fillFields();
             adminCollectionRenderers.forEach((render) => render());
-            setEditStatus('JSON 导入并应用成功。');
+            setEditStatus('JSON 已导入为本地草稿，请发布到 GitHub 使访客同步。');
           } catch (error) {
             setEditStatus('JSON 文件格式不正确。');
           }
         };
         reader.readAsText(file, 'utf-8');
         importInput.value = '';
+      });
+
+    publishBtn &&
+      publishBtn.addEventListener('click', async () => {
+        if (!isLoggedIn()) {
+          setPublishStatus('请先登录管理员账号。');
+          return;
+        }
+
+        const config = readPublishConfig();
+        savePublishConfig(config);
+
+        try {
+          setPublishStatus('正在发布到 GitHub，请稍候...');
+          await publishSiteContentToGitHub(config, siteContent);
+          const published = await loadPublishedSiteContent();
+          if (published) {
+            siteContent = published;
+            saveSiteContent(siteContent);
+            applySiteContent(siteContent);
+            fillFields();
+            adminCollectionRenderers.forEach((render) => render());
+          }
+          setPublishStatus('发布成功，访客刷新后即可看到最新内容。');
+        } catch (error) {
+          setPublishStatus(`发布失败：${error instanceof Error ? error.message : '未知错误'}`);
+        }
       });
 
     logoutBtn &&
@@ -1014,7 +1197,7 @@
           siteContent.avatar_data_url = result;
           saveSiteContent(siteContent);
           applySiteContent(siteContent);
-          setAvatarStatus('头像已更新并保存。');
+          setAvatarStatus('头像已更新为本地草稿，请发布到 GitHub 后访客可见。');
         };
         reader.readAsDataURL(file);
         avatarInput.value = '';
@@ -1029,7 +1212,7 @@
         siteContent.avatar_data_url = '';
         saveSiteContent(siteContent);
         applySiteContent(siteContent);
-        setAvatarStatus('头像已重置为默认。');
+        setAvatarStatus('头像已重置为本地草稿，请发布到 GitHub 后访客可见。');
       });
   }
 
@@ -1063,16 +1246,18 @@
     });
   }
 
-  function init() {
+  async function init() {
     setYear();
     initLanguage();
     initTheme();
-    initSiteContent();
+    await initSiteContent();
     initAnchorNav();
     initReveal();
     initAdminPanel();
     initContactForm();
   }
 
-  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', () => {
+    init().catch(() => {});
+  });
 })();

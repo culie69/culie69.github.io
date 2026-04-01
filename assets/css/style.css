@@ -756,6 +756,11 @@ select.input {
   grid-column: 1 / -1;
 }
 
+.admin-publish-form [data-admin-publish-token],
+.admin-publish-form [data-admin-publish] {
+  grid-column: 1 / -1;
+}
+
 .admin-mini-actions {
   display: inline-flex;
   gap: 0.3rem;

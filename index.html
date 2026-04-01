@@ -240,7 +240,7 @@
     </div>
     <div class="admin-body">
       <section class="admin-section" data-admin-auth>
-        <p class="admin-note"><span class="lang zh">管理员默认密码已预置为：LLf200182（可登录后修改）。</span><span class="lang en">Default admin password is preset to: LLf200182 (you can change it after login).</span></p>
+        <p class="admin-note"><span class="lang zh">管理员默认密码已预置为：LLf200182（可登录后修改）。保存后请点击“发布到GitHub”，访客端才会同步看到更新。</span><span class="lang en">Default admin password is preset to: LLf200182 (you can change it after login). Click “Publish to GitHub” after saving so visitors can see updates.</span></p>
         <div class="admin-grid">
           <input class="input" type="password" placeholder="Admin Password" data-admin-password>
           <button class="btn primary" type="button" data-admin-login>
@@ -355,6 +355,21 @@
             </form>
             <p class="empty" data-admin-collection-empty><span class="lang zh">暂无条目。</span><span class="lang en">No items yet.</span></p>
             <ul class="list" data-admin-collection-list></ul>
+          </section>
+
+          <section class="admin-block">
+            <h4><span class="lang zh">发布同步管理</span><span class="lang en">Publish Sync</span></h4>
+            <form class="admin-list-form admin-publish-form" autocomplete="off">
+              <input class="input" type="text" data-admin-publish-owner placeholder="GitHub Owner (e.g. culie69)">
+              <input class="input" type="text" data-admin-publish-repo placeholder="GitHub Repo (e.g. culie69.github.io)">
+              <input class="input" type="text" data-admin-publish-branch placeholder="Branch (e.g. main)">
+              <input class="input" type="text" data-admin-publish-path placeholder="Path (e.g. assets/data/site-content.json)">
+              <input class="input" type="password" data-admin-publish-token placeholder="GitHub PAT (repo contents write)">
+              <button class="btn primary" type="button" data-admin-publish>
+                <span class="lang zh">发布到GitHub</span><span class="lang en">Publish to GitHub</span>
+              </button>
+            </form>
+            <p class="admin-note" data-admin-publish-status></p>
           </section>
         </div>
 
