@@ -296,9 +296,20 @@
                 </select>
                 <input class="input" type="text" data-admin-home-image-url placeholder="背景图片 URL 或站内路径（如 assets/uploads/home/cover.jpg）">
                 <input class="input" type="text" data-admin-home-video-url placeholder="背景视频 URL 或站内路径（如 assets/uploads/home/loop.mp4）">
+                <div class="admin-range-control">
+                  <label class="admin-note" for="home-focus-x"><span class="lang zh">横向焦点</span><span class="lang en">Horizontal Focus</span> <strong data-admin-home-focus-x-value>50%</strong></label>
+                  <input id="home-focus-x" class="input" type="range" min="0" max="100" step="1" value="50" data-admin-home-focus-x>
+                </div>
+                <div class="admin-range-control">
+                  <label class="admin-note" for="home-focus-y"><span class="lang zh">纵向焦点</span><span class="lang en">Vertical Focus</span> <strong data-admin-home-focus-y-value>50%</strong></label>
+                  <input id="home-focus-y" class="input" type="range" min="0" max="100" step="1" value="50" data-admin-home-focus-y>
+                </div>
                 <div class="admin-actions">
                   <button class="btn" type="button" data-admin-home-media-upload>
                     <span class="lang zh">选择图片/视频文件</span><span class="lang en">Choose Image/Video File</span>
+                  </button>
+                  <button class="btn subtle" type="button" data-admin-home-focus-open>
+                    <span class="lang zh">框选展示范围</span><span class="lang en">Pick Display Range</span>
                   </button>
                   <button class="btn primary" type="button" data-admin-home-media-apply>
                     <span class="lang zh">保存头图设置</span><span class="lang en">Save Hero Media</span>
@@ -442,6 +453,31 @@
     </div>
   </aside>
 
+  <div class="home-focus-modal" data-home-focus-modal hidden>
+    <div class="home-focus-backdrop" data-home-focus-backdrop></div>
+    <div class="home-focus-dialog" role="dialog" aria-modal="true" aria-label="Hero Media Focus Picker">
+      <h3 style="margin:0;"><span class="lang zh">头图展示范围框选</span><span class="lang en">Hero Display Range Picker</span></h3>
+      <p class="admin-note" data-home-focus-hint>
+        <span class="lang zh">拖动橙色矩形框，选择图片/视频在头图中的展示位置；点“应用框选”保存。</span>
+        <span class="lang en">Drag the orange rectangle to choose the visible position, then click “Apply Selection”.</span>
+      </p>
+      <div class="home-focus-stage" data-home-focus-stage>
+        <img class="home-focus-media" alt="" hidden data-home-focus-preview-image>
+        <video class="home-focus-media" muted loop playsinline preload="metadata" hidden data-home-focus-preview-video></video>
+        <div class="home-focus-rect" data-home-focus-rect hidden></div>
+      </div>
+      <div class="home-focus-actions">
+        <button class="btn subtle" type="button" data-home-focus-cancel>
+          <span class="lang zh">取消</span><span class="lang en">Cancel</span>
+        </button>
+        <button class="btn primary" type="button" data-home-focus-apply>
+          <span class="lang zh">应用框选</span><span class="lang en">Apply Selection</span>
+        </button>
+      </div>
+    </div>
+  </div>
   <script src="assets/js/site.js"></script>
 </body>
 </html>
+
+

@@ -9,10 +9,12 @@
     adminHash: 'll_admin_password_hash',
     adminSession: 'll_admin_session',
     adminCustom: 'll_admin_custom_password',
+    adminBaseline: 'll_admin_password_baseline',
     publishConfig: 'll_github_publish_config'
   };
 
   const DEFAULT_ADMIN_HASH = '9d88dcf23ddc8847acde16ffd32fd569525f0b5f1ef12a5ca8a3415089e9b889';
+  const ADMIN_PASSWORD_BASELINE_VERSION = '20260403';
   const AVATAR_PLACEHOLDER = 'assets/img/avatar-placeholder.svg';
   const COLLECTION_KEYS = ['skills', 'certificates', 'publications'];
   const SECTION_ORDER_DEFAULT = ['education', 'research', 'skills', 'certificates', 'publications', 'contact'];
@@ -53,6 +55,8 @@
     home_bg_image_url: '',
     home_bg_video_url: '',
     home_bg_media_version: '',
+    home_bg_focus_x: '50',
+    home_bg_focus_y: '50',
     avatar_data_url: '',
 
     edu_intro_zh: '围绕地球物理方向的系统学习路径。',
@@ -259,6 +263,14 @@
     return HERO_BG_TYPES.includes(next) ? next : 'gradient';
   }
 
+  function normalizeHeroFocusPercent(value) {
+    const parsed = Number.parseFloat(String(value || '').trim());
+    if (!Number.isFinite(parsed)) {
+      return 50;
+    }
+    return Math.max(0, Math.min(100, Math.round(parsed)));
+  }
+
   function sanitizePathSegment(fileName) {
     return String(fileName || '')
       .trim()
@@ -396,8 +408,15 @@
   }
 
   function ensureDefaultAdminPassword() {
-    const custom = localStorage.getItem(STORAGE_KEYS.adminCustom) === '1';
-    if (!custom) {
+    const synced = localStorage.getItem(STORAGE_KEYS.adminBaseline) === ADMIN_PASSWORD_BASELINE_VERSION;
+    if (!synced) {
+      localStorage.setItem(STORAGE_KEYS.adminHash, DEFAULT_ADMIN_HASH);
+      localStorage.setItem(STORAGE_KEYS.adminBaseline, ADMIN_PASSWORD_BASELINE_VERSION);
+      return;
+    }
+
+    const savedHash = String(localStorage.getItem(STORAGE_KEYS.adminHash) || '').trim();
+    if (!savedHash) {
       localStorage.setItem(STORAGE_KEYS.adminHash, DEFAULT_ADMIN_HASH);
     }
   }
@@ -856,6 +875,9 @@
     const heroBgType = inferHeroBgType(content);
     const heroBgCss = String(content.home_bg || '').trim();
     const heroMediaVersion = String(content.home_bg_media_version || '').trim();
+    const focusX = normalizeHeroFocusPercent(content.home_bg_focus_x);
+    const focusY = normalizeHeroFocusPercent(content.home_bg_focus_y);
+    const objectPosition = `${focusX}% ${focusY}%`;
     const previewUrl =
       pendingHomeMediaUpload && pendingHomeMediaUpload.kind === heroBgType ? pendingHomeMediaUpload.previewUrl : '';
     const imageUrl = previewUrl || getResolvedMediaUrl(content.home_bg_image_url, heroMediaVersion);
@@ -871,6 +893,7 @@
     }
 
     if (homeBgImage) {
+      homeBgImage.style.objectPosition = objectPosition;
       if (heroBgType === 'image' && imageUrl) {
         if (homeBgImage.dataset.src !== imageUrl) {
           homeBgImage.src = imageUrl;
@@ -889,6 +912,7 @@
       homeBgVideo.loop = true;
       homeBgVideo.autoplay = true;
       homeBgVideo.playsInline = true;
+      homeBgVideo.style.objectPosition = objectPosition;
       if (heroBgType === 'video' && videoUrl) {
         if (homeBgVideo.dataset.src !== videoUrl) {
           homeBgVideo.src = videoUrl;
@@ -1118,11 +1142,25 @@
     const homeMediaTypeInput = document.querySelector('[data-admin-home-media-type]');
     const homeImageUrlInput = document.querySelector('[data-admin-home-image-url]');
     const homeVideoUrlInput = document.querySelector('[data-admin-home-video-url]');
+    const homeFocusXInput = document.querySelector('[data-admin-home-focus-x]');
+    const homeFocusYInput = document.querySelector('[data-admin-home-focus-y]');
+    const homeFocusXValue = document.querySelector('[data-admin-home-focus-x-value]');
+    const homeFocusYValue = document.querySelector('[data-admin-home-focus-y-value]');
     const homeMediaUploadBtn = document.querySelector('[data-admin-home-media-upload]');
+    const homeFocusOpenBtn = document.querySelector('[data-admin-home-focus-open]');
     const homeMediaApplyBtn = document.querySelector('[data-admin-home-media-apply]');
     const homeMediaResetBtn = document.querySelector('[data-admin-home-media-reset]');
     const homeMediaInput = document.querySelector('[data-admin-home-media-input]');
     const homeMediaStatus = document.querySelector('[data-admin-home-media-status]');
+    const homeFocusModal = document.querySelector('[data-home-focus-modal]');
+    const homeFocusBackdrop = document.querySelector('[data-home-focus-backdrop]');
+    const homeFocusStage = document.querySelector('[data-home-focus-stage]');
+    const homeFocusPreviewImage = document.querySelector('[data-home-focus-preview-image]');
+    const homeFocusPreviewVideo = document.querySelector('[data-home-focus-preview-video]');
+    const homeFocusRect = document.querySelector('[data-home-focus-rect]');
+    const homeFocusHint = document.querySelector('[data-home-focus-hint]');
+    const homeFocusApplyBtn = document.querySelector('[data-home-focus-apply]');
+    const homeFocusCancelBtn = document.querySelector('[data-home-focus-cancel]');
     const publishOwnerInput = document.querySelector('[data-admin-publish-owner]');
     const publishRepoInput = document.querySelector('[data-admin-publish-repo]');
     const publishBranchInput = document.querySelector('[data-admin-publish-branch]');
@@ -1177,7 +1215,10 @@
     };
 
     const isLoggedIn = () => localStorage.getItem(STORAGE_KEYS.adminSession) === '1';
-    const hasPassword = () => !!localStorage.getItem(STORAGE_KEYS.adminHash);
+    const getStoredAdminHash = () => String(localStorage.getItem(STORAGE_KEYS.adminHash) || '').trim();
+    const hasPassword = () => !!getStoredAdminHash();
+    let homeFocusPickerState = null;
+    let homeFocusPickerToken = 0;
 
     const fillPublishConfig = (config) => {
       if (publishOwnerInput) publishOwnerInput.value = config.owner || '';
@@ -1195,6 +1236,29 @@
       token: publishTokenInput ? publishTokenInput.value.trim() : ''
     });
 
+    const setHomeFocusValueLabels = (focusX, focusY) => {
+      if (homeFocusXValue) {
+        homeFocusXValue.textContent = `${focusX}%`;
+      }
+      if (homeFocusYValue) {
+        homeFocusYValue.textContent = `${focusY}%`;
+      }
+    };
+
+    const syncHomeFocusFromInputs = () => {
+      const focusX = normalizeHeroFocusPercent(homeFocusXInput ? homeFocusXInput.value : siteContent.home_bg_focus_x);
+      const focusY = normalizeHeroFocusPercent(homeFocusYInput ? homeFocusYInput.value : siteContent.home_bg_focus_y);
+      siteContent.home_bg_focus_x = String(focusX);
+      siteContent.home_bg_focus_y = String(focusY);
+      if (homeFocusXInput) {
+        homeFocusXInput.value = String(focusX);
+      }
+      if (homeFocusYInput) {
+        homeFocusYInput.value = String(focusY);
+      }
+      setHomeFocusValueLabels(focusX, focusY);
+    };
+
     const fillHomeMediaFields = () => {
       if (homeMediaTypeInput) {
         homeMediaTypeInput.value = inferHeroBgType(siteContent);
@@ -1205,6 +1269,7 @@
       if (homeVideoUrlInput) {
         homeVideoUrlInput.value = String(siteContent.home_bg_video_url || '');
       }
+      syncHomeFocusFromInputs();
     };
 
     const saveDraftAndApply = () => {
@@ -1213,6 +1278,432 @@
       applySiteContent(siteContent);
     };
 
+    const clampRange = (value, min, max) => Math.max(min, Math.min(max, value));
+
+    const setHomeFocusHintText = (text) => {
+      if (homeFocusHint) {
+        homeFocusHint.textContent = text;
+      }
+    };
+
+    const cleanupHomeFocusPreview = () => {
+      if (homeFocusPreviewImage) {
+        homeFocusPreviewImage.hidden = true;
+        homeFocusPreviewImage.removeAttribute('src');
+        homeFocusPreviewImage.style.removeProperty('left');
+        homeFocusPreviewImage.style.removeProperty('top');
+        homeFocusPreviewImage.style.removeProperty('width');
+        homeFocusPreviewImage.style.removeProperty('height');
+      }
+      if (homeFocusPreviewVideo) {
+        homeFocusPreviewVideo.hidden = true;
+        homeFocusPreviewVideo.pause();
+        homeFocusPreviewVideo.removeAttribute('src');
+        homeFocusPreviewVideo.load();
+        homeFocusPreviewVideo.style.removeProperty('left');
+        homeFocusPreviewVideo.style.removeProperty('top');
+        homeFocusPreviewVideo.style.removeProperty('width');
+        homeFocusPreviewVideo.style.removeProperty('height');
+      }
+      if (homeFocusRect) {
+        homeFocusRect.hidden = true;
+        homeFocusRect.style.removeProperty('left');
+        homeFocusRect.style.removeProperty('top');
+        homeFocusRect.style.removeProperty('width');
+        homeFocusRect.style.removeProperty('height');
+      }
+    };
+
+    const closeHomeFocusPicker = ({ restoreFocus = false, silentHint = false } = {}) => {
+      const state = homeFocusPickerState;
+      homeFocusPickerToken += 1;
+      homeFocusPickerState = null;
+
+      if (restoreFocus && state) {
+        if (homeFocusXInput) {
+          homeFocusXInput.value = String(state.prevFocusX);
+        }
+        if (homeFocusYInput) {
+          homeFocusYInput.value = String(state.prevFocusY);
+        }
+        syncHomeFocusFromInputs();
+        applySiteContent(siteContent);
+      }
+
+      if (homeFocusModal) {
+        homeFocusModal.hidden = true;
+      }
+      document.body.classList.remove('home-focus-modal-open');
+      cleanupHomeFocusPreview();
+
+      if (!silentHint) {
+        setHomeFocusHintText('????????????/??????????????????????');
+      }
+    };
+
+    const getCurrentHomeFocusSource = () => {
+      const mediaType = normalizeHeroBgType(homeMediaTypeInput ? homeMediaTypeInput.value : inferHeroBgType(siteContent));
+      if (mediaType === 'gradient') {
+        return null;
+      }
+
+      if (pendingHomeMediaUpload && pendingHomeMediaUpload.kind === mediaType && pendingHomeMediaUpload.previewUrl) {
+        return { kind: mediaType, url: pendingHomeMediaUpload.previewUrl };
+      }
+
+      const directInput = mediaType === 'image'
+        ? (homeImageUrlInput ? homeImageUrlInput.value.trim() : '')
+        : (homeVideoUrlInput ? homeVideoUrlInput.value.trim() : '');
+      const stored = mediaType === 'image'
+        ? String(siteContent.home_bg_image_url || '').trim()
+        : String(siteContent.home_bg_video_url || '').trim();
+      const rawValue = directInput || stored;
+      if (!rawValue) {
+        return null;
+      }
+
+      const resolved = getResolvedMediaUrl(rawValue, String(siteContent.home_bg_media_version || '').trim());
+      return { kind: mediaType, url: resolved || rawValue };
+    };
+
+    const getHeroAspectRatio = () => {
+      const homePanel = document.querySelector('[data-home-panel]');
+      if (homePanel) {
+        const rect = homePanel.getBoundingClientRect();
+        if (rect.width > 1 && rect.height > 1) {
+          return rect.width / rect.height;
+        }
+      }
+      return 2.6;
+    };
+
+    const applyHomeFocusPickerCenter = (x, y) => {
+      const state = homeFocusPickerState;
+      if (!state || !homeFocusRect) {
+        return;
+      }
+
+      const minX = state.displayLeft + state.rectWidth / 2;
+      const maxX = state.displayLeft + state.displayWidth - state.rectWidth / 2;
+      const minY = state.displayTop + state.rectHeight / 2;
+      const maxY = state.displayTop + state.displayHeight - state.rectHeight / 2;
+      state.centerX = clampRange(x, minX, maxX);
+      state.centerY = clampRange(y, minY, maxY);
+
+      homeFocusRect.style.left = `${state.centerX - state.rectWidth / 2}px`;
+      homeFocusRect.style.top = `${state.centerY - state.rectHeight / 2}px`;
+      homeFocusRect.style.width = `${state.rectWidth}px`;
+      homeFocusRect.style.height = `${state.rectHeight}px`;
+
+      const focusX = normalizeHeroFocusPercent(((state.centerX - state.displayLeft) / state.displayWidth) * 100);
+      const focusY = normalizeHeroFocusPercent(((state.centerY - state.displayTop) / state.displayHeight) * 100);
+      state.focusX = focusX;
+      state.focusY = focusY;
+
+      if (homeFocusXInput) {
+        homeFocusXInput.value = String(focusX);
+      }
+      if (homeFocusYInput) {
+        homeFocusYInput.value = String(focusY);
+      }
+      syncHomeFocusFromInputs();
+      applySiteContent(siteContent);
+    };
+
+    const layoutHomeFocusPicker = () => {
+      const state = homeFocusPickerState;
+      if (!state || !homeFocusStage) {
+        return;
+      }
+
+      const stageRect = homeFocusStage.getBoundingClientRect();
+      const stageWidth = stageRect.width;
+      const stageHeight = stageRect.height;
+      if (!(stageWidth > 0 && stageHeight > 0 && state.mediaWidth > 0 && state.mediaHeight > 0)) {
+        return;
+      }
+
+      const scale = Math.min(stageWidth / state.mediaWidth, stageHeight / state.mediaHeight);
+      state.displayWidth = state.mediaWidth * scale;
+      state.displayHeight = state.mediaHeight * scale;
+      state.displayLeft = (stageWidth - state.displayWidth) / 2;
+      state.displayTop = (stageHeight - state.displayHeight) / 2;
+
+      const activeMedia = state.kind === 'video' ? homeFocusPreviewVideo : homeFocusPreviewImage;
+      if (activeMedia) {
+        activeMedia.style.left = `${state.displayLeft}px`;
+        activeMedia.style.top = `${state.displayTop}px`;
+        activeMedia.style.width = `${state.displayWidth}px`;
+        activeMedia.style.height = `${state.displayHeight}px`;
+      }
+
+      const heroAspect = getHeroAspectRatio();
+      const mediaAspect = state.mediaWidth / state.mediaHeight;
+      if (mediaAspect >= heroAspect) {
+        state.rectHeight = state.displayHeight;
+        state.rectWidth = state.displayHeight * heroAspect;
+      } else {
+        state.rectWidth = state.displayWidth;
+        state.rectHeight = state.displayWidth / heroAspect;
+      }
+
+      state.rectWidth = clampRange(state.rectWidth, 24, state.displayWidth);
+      state.rectHeight = clampRange(state.rectHeight, 24, state.displayHeight);
+      if (homeFocusRect) {
+        homeFocusRect.hidden = false;
+      }
+
+      const centerX = state.displayLeft + (state.focusX / 100) * state.displayWidth;
+      const centerY = state.displayTop + (state.focusY / 100) * state.displayHeight;
+      applyHomeFocusPickerCenter(centerX, centerY);
+    };
+
+    const loadHomeFocusMediaForPicker = (kind, url, token) =>
+      new Promise((resolve, reject) => {
+        if (kind === 'image') {
+          if (!homeFocusPreviewImage) {
+            reject(new Error('???????'));
+            return;
+          }
+          if (homeFocusPreviewVideo) {
+            homeFocusPreviewVideo.hidden = true;
+            homeFocusPreviewVideo.pause();
+            homeFocusPreviewVideo.removeAttribute('src');
+            homeFocusPreviewVideo.load();
+          }
+
+          const img = homeFocusPreviewImage;
+          img.hidden = false;
+          const onLoad = () => {
+            img.removeEventListener('load', onLoad);
+            img.removeEventListener('error', onError);
+            if (token !== homeFocusPickerToken) {
+              resolve({ width: 0, height: 0 });
+              return;
+            }
+            resolve({ width: img.naturalWidth, height: img.naturalHeight });
+          };
+          const onError = () => {
+            img.removeEventListener('load', onLoad);
+            img.removeEventListener('error', onError);
+            reject(new Error('???????????????????'));
+          };
+
+          img.addEventListener('load', onLoad, { once: true });
+          img.addEventListener('error', onError, { once: true });
+          img.src = url;
+          return;
+        }
+
+        if (!homeFocusPreviewVideo) {
+          reject(new Error('???????'));
+          return;
+        }
+        if (homeFocusPreviewImage) {
+          homeFocusPreviewImage.hidden = true;
+          homeFocusPreviewImage.removeAttribute('src');
+        }
+
+        const video = homeFocusPreviewVideo;
+        video.hidden = false;
+        video.muted = true;
+        video.loop = true;
+        video.autoplay = true;
+        video.playsInline = true;
+
+        const onLoadedMeta = () => {
+          video.removeEventListener('loadedmetadata', onLoadedMeta);
+          video.removeEventListener('error', onError);
+          if (token !== homeFocusPickerToken) {
+            resolve({ width: 0, height: 0 });
+            return;
+          }
+          resolve({ width: video.videoWidth, height: video.videoHeight });
+          video.play().catch(() => {});
+        };
+        const onError = () => {
+          video.removeEventListener('loadedmetadata', onLoadedMeta);
+          video.removeEventListener('error', onError);
+          reject(new Error('???????????????????'));
+        };
+
+        video.addEventListener('loadedmetadata', onLoadedMeta, { once: true });
+        video.addEventListener('error', onError, { once: true });
+        video.src = url;
+        video.load();
+      });
+
+    const openHomeFocusPicker = async () => {
+      if (!homeFocusModal || !homeFocusStage || !homeFocusRect) {
+        setHomeMediaStatus('???????????????????');
+        return;
+      }
+
+      const source = getCurrentHomeFocusSource();
+      if (!source) {
+        setHomeMediaStatus('????????????????');
+        return;
+      }
+
+      const focusX = normalizeHeroFocusPercent(siteContent.home_bg_focus_x);
+      const focusY = normalizeHeroFocusPercent(siteContent.home_bg_focus_y);
+      homeFocusPickerState = {
+        kind: source.kind,
+        prevFocusX: focusX,
+        prevFocusY: focusY,
+        focusX,
+        focusY,
+        mediaWidth: 0,
+        mediaHeight: 0,
+        displayLeft: 0,
+        displayTop: 0,
+        displayWidth: 0,
+        displayHeight: 0,
+        rectWidth: 0,
+        rectHeight: 0,
+        centerX: 0,
+        centerY: 0,
+        draggingPointerId: null
+      };
+
+      homeFocusPickerToken += 1;
+      const token = homeFocusPickerToken;
+      homeFocusModal.hidden = false;
+      document.body.classList.add('home-focus-modal-open');
+      if (homeFocusRect) {
+        homeFocusRect.hidden = true;
+      }
+      setHomeFocusHintText('????????????...');
+
+      try {
+        const size = await loadHomeFocusMediaForPicker(source.kind, source.url, token);
+        if (token !== homeFocusPickerToken || !homeFocusPickerState) {
+          return;
+        }
+        homeFocusPickerState.mediaWidth = size.width;
+        homeFocusPickerState.mediaHeight = size.height;
+        if (!(size.width > 0 && size.height > 0)) {
+          throw new Error('????????');
+        }
+
+        setHomeFocusHintText('????????????/????????????');
+        layoutHomeFocusPicker();
+      } catch (error) {
+        closeHomeFocusPicker({ restoreFocus: true, silentHint: true });
+        setHomeMediaStatus(`???????${error instanceof Error ? error.message : "????"}`);
+      }
+    };
+
+    if (homeFocusXInput) {
+      homeFocusXInput.addEventListener('input', () => {
+        syncHomeFocusFromInputs();
+        if (homeFocusPickerState) {
+          homeFocusPickerState.focusX = normalizeHeroFocusPercent(siteContent.home_bg_focus_x);
+          homeFocusPickerState.focusY = normalizeHeroFocusPercent(siteContent.home_bg_focus_y);
+          layoutHomeFocusPicker();
+        } else {
+          applySiteContent(siteContent);
+        }
+      });
+    }
+
+    if (homeFocusYInput) {
+      homeFocusYInput.addEventListener('input', () => {
+        syncHomeFocusFromInputs();
+        if (homeFocusPickerState) {
+          homeFocusPickerState.focusX = normalizeHeroFocusPercent(siteContent.home_bg_focus_x);
+          homeFocusPickerState.focusY = normalizeHeroFocusPercent(siteContent.home_bg_focus_y);
+          layoutHomeFocusPicker();
+        } else {
+          applySiteContent(siteContent);
+        }
+      });
+    }
+
+    if (homeFocusOpenBtn) {
+      homeFocusOpenBtn.addEventListener('click', () => {
+        if (!isLoggedIn()) {
+          setHomeMediaStatus('请先登录管理员账号。');
+          return;
+        }
+        openHomeFocusPicker();
+      });
+    }
+
+    if (homeFocusCancelBtn) {
+      homeFocusCancelBtn.addEventListener('click', () => {
+        closeHomeFocusPicker({ restoreFocus: true });
+      });
+    }
+
+    if (homeFocusBackdrop) {
+      homeFocusBackdrop.addEventListener('click', () => {
+        closeHomeFocusPicker({ restoreFocus: true });
+      });
+    }
+
+    if (homeFocusApplyBtn) {
+      homeFocusApplyBtn.addEventListener('click', () => {
+        if (!homeFocusPickerState) {
+          closeHomeFocusPicker();
+          return;
+        }
+        saveDraftAndApply();
+        closeHomeFocusPicker({ silentHint: true });
+        setHomeMediaStatus('展示区域已保存为本地草稿，请发布到 GitHub。');
+      });
+    }
+
+    if (homeFocusStage) {
+      const moveByEvent = (event) => {
+        const state = homeFocusPickerState;
+        if (!state) {
+          return;
+        }
+        const rect = homeFocusStage.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        applyHomeFocusPickerCenter(x, y);
+      };
+
+      homeFocusStage.addEventListener('pointerdown', (event) => {
+        const state = homeFocusPickerState;
+        if (!state || event.button !== 0) {
+          return;
+        }
+        state.draggingPointerId = event.pointerId;
+        homeFocusStage.setPointerCapture(event.pointerId);
+        moveByEvent(event);
+      });
+
+      homeFocusStage.addEventListener('pointermove', (event) => {
+        const state = homeFocusPickerState;
+        if (!state || state.draggingPointerId !== event.pointerId) {
+          return;
+        }
+        moveByEvent(event);
+      });
+
+      const releasePointer = (event) => {
+        const state = homeFocusPickerState;
+        if (!state || state.draggingPointerId !== event.pointerId) {
+          return;
+        }
+        state.draggingPointerId = null;
+        if (homeFocusStage.hasPointerCapture(event.pointerId)) {
+          homeFocusStage.releasePointerCapture(event.pointerId);
+        }
+      };
+
+      homeFocusStage.addEventListener('pointerup', releasePointer);
+      homeFocusStage.addEventListener('pointercancel', releasePointer);
+    }
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && homeFocusModal && !homeFocusModal.hidden) {
+        closeHomeFocusPicker({ restoreFocus: true });
+      }
+    });
     const renderSectionOrderManager = () => {
       if (!sectionOrderList) {
         return;
@@ -1579,7 +2070,7 @@
           return;
         }
         const hash = await hashPassword(pwd);
-        if (hash === localStorage.getItem(STORAGE_KEYS.adminHash)) {
+        if (hash === getStoredAdminHash()) {
           localStorage.setItem(STORAGE_KEYS.adminSession, '1');
           if (passwordInput) {
             passwordInput.value = '';
@@ -1602,7 +2093,6 @@
         }
         const hash = await hashPassword(newPwd.trim());
         localStorage.setItem(STORAGE_KEYS.adminHash, hash);
-        localStorage.setItem(STORAGE_KEYS.adminCustom, '1');
         setEditStatus('管理员密码已更新。');
       });
 
@@ -1742,7 +2232,12 @@
         }
         saveDraftAndApply();
         fillHomeMediaFields();
-        setHomeMediaStatus('媒体文件已选择，点击“发布到GitHub”后访客可见。');
+        if (mediaKind === 'image') {
+          setHomeMediaStatus('图片已选择，将自动打开展示范围框选。');
+          openHomeFocusPicker();
+        } else {
+          setHomeMediaStatus('媒体文件已选择，点击“发布到GitHub”后访客可见。');
+        }
         homeMediaInput.value = '';
       });
 
@@ -1863,6 +2358,12 @@
         setEditStatus('已退出管理员登录。');
       });
 
+    window.addEventListener('storage', (event) => {
+      if (event.key === STORAGE_KEYS.adminHash && !isLoggedIn()) {
+        refreshAuthView();
+      }
+    });
+
     avatarUploadBtn &&
       avatarUploadBtn.addEventListener('click', () => {
         if (!isLoggedIn()) {
@@ -1972,3 +2473,5 @@
     init().catch(() => {});
   });
 })();
+
+
