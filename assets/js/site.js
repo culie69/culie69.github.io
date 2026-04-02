@@ -291,6 +291,16 @@
     return stretch >= HERO_ADAPTIVE_MIX_THRESHOLD ? 'contain' : 'cover';
   }
 
+  function getContainHeroMinHeight(panelWidth, mediaAspect) {
+    if (!(panelWidth > 0 && mediaAspect > 0)) {
+      return 0;
+    }
+    const naturalHeight = panelWidth / mediaAspect;
+    const minHeight = 320;
+    const maxHeight = Math.max(420, window.innerHeight * 0.82);
+    return Math.round(Math.max(minHeight, Math.min(naturalHeight, maxHeight)));
+  }
+
   function toCssUrlValue(urlText) {
     const escaped = String(urlText || '')
       .replace(/\\/g, '\\\\')
@@ -960,8 +970,12 @@
     const videoCacheKey = videoUrl ? `video:${videoUrl}` : '';
     const imageAspect = imageCacheKey ? heroMediaAspectCache.get(imageCacheKey) : NaN;
     const videoAspect = videoCacheKey ? heroMediaAspectCache.get(videoCacheKey) : NaN;
-    const imageFitMode = heroBgType === 'image' ? getAdaptiveHeroFitMode(imageAspect, heroAspect) : 'cover';
+    const imageFitMode = heroBgType === 'image' ? 'contain' : 'cover';
     const videoFitMode = heroBgType === 'video' ? getAdaptiveHeroFitMode(videoAspect, heroAspect) : 'cover';
+    const imageTargetMinHeight =
+      homePanel && heroBgType === 'image' && Number.isFinite(imageAspect) && imageAspect > 0
+        ? getContainHeroMinHeight(homePanel.getBoundingClientRect().width, imageAspect)
+        : 0;
 
     if (homePanel) {
       if (heroBgCss) {
@@ -972,6 +986,11 @@
       homePanel.dataset.homeBgType = heroBgType;
       homePanel.dataset.homeImageFit = heroBgType === 'image' ? imageFitMode : '';
       homePanel.dataset.homeVideoFit = heroBgType === 'video' ? videoFitMode : '';
+      if (imageTargetMinHeight > 0) {
+        homePanel.style.minHeight = `${imageTargetMinHeight}px`;
+      } else {
+        homePanel.style.removeProperty('min-height');
+      }
       homePanel.style.setProperty('--hero-media-backdrop-image', 'none');
       homePanel.style.setProperty('--hero-media-backdrop-opacity', '0');
       homePanel.style.setProperty('--hero-media-mask-a', '0.2');
@@ -2628,4 +2647,5 @@
     init().catch(() => {});
   });
 })();
+
 
