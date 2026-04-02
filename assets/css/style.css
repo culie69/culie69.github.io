@@ -792,6 +792,19 @@ select.input {
   grid-column: 1 / -1;
 }
 
+.admin-range-control {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.admin-range-control label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
 .admin-publish-form [data-admin-publish-token],
 .admin-publish-form [data-admin-publish] {
   grid-column: 1 / -1;
@@ -816,6 +829,86 @@ select.input {
   border: 1px dashed var(--border);
   border-radius: 10px;
   background: color-mix(in srgb, var(--surface-strong) 88%, transparent);
+}
+
+body.home-focus-modal-open {
+  overflow: hidden;
+}
+
+.home-focus-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 180;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.home-focus-modal[hidden] {
+  display: none;
+}
+
+.home-focus-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 14, 22, 0.62);
+  backdrop-filter: blur(2px);
+}
+
+.home-focus-dialog {
+  position: relative;
+  width: min(960px, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-strong);
+  box-shadow: var(--shadow);
+  padding: 0.95rem;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.home-focus-stage {
+  position: relative;
+  width: 100%;
+  height: min(62vh, 470px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: color-mix(in srgb, #111823 75%, var(--surface) 25%);
+}
+
+.home-focus-media {
+  position: absolute;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.home-focus-rect {
+  position: absolute;
+  border: 2px solid #f2962f;
+  border-radius: 8px;
+  background: rgba(242, 150, 47, 0.15);
+  box-shadow: 0 0 0 999px rgba(7, 12, 20, 0.46);
+  cursor: move;
+  touch-action: none;
+}
+
+.home-focus-rect::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px dashed rgba(255, 255, 255, 0.82);
+  border-radius: 5px;
+}
+
+.home-focus-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.45rem;
 }
 
 .reveal {
@@ -898,6 +991,20 @@ select.input {
     text-align: left;
     min-width: 0;
   }
+
+  .home-focus-modal {
+    padding: 0.6rem;
+  }
+
+  .home-focus-dialog {
+    width: calc(100vw - 1.2rem);
+    max-height: calc(100vh - 1.2rem);
+    padding: 0.75rem;
+  }
+
+  .home-focus-stage {
+    height: min(52vh, 380px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -910,3 +1017,5 @@ select.input {
     scroll-behavior: auto !important;
   }
 }
+
+
