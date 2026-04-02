@@ -30,6 +30,11 @@
 
   <main>
     <section id="home" class="profile-hero reveal" data-home-panel>
+      <div class="hero-media-layer" aria-hidden="true">
+        <img class="hero-bg-image" src="" alt="" data-home-bg-image hidden>
+        <video class="hero-bg-video" data-home-bg-video muted loop playsinline preload="metadata" hidden></video>
+        <div class="hero-media-mask"></div>
+      </div>
       <div class="container profile-hero-inner">
         <aside class="hero-avatar-block">
           <div class="avatar-frame hero-avatar-frame">
@@ -273,6 +278,38 @@
                 <input class="file-input" type="file" accept="image/*" hidden data-admin-avatar-input>
               </div>
               <p class="admin-note" data-admin-avatar-status></p>
+            </div>
+          </section>
+
+          <section class="admin-block">
+            <h4><span class="lang zh">头图媒体管理</span><span class="lang en">Hero Media Management</span></h4>
+            <div class="admin-avatar-box">
+              <p class="admin-note">
+                <span class="lang zh">可切换橙色渐变 / 背景图片 / 背景视频。视频默认静音循环。选择本地文件后，点击“发布到GitHub”才会对访客生效。</span>
+                <span class="lang en">Switch between gradient, background image, or muted looping background video. Local files become public only after “Publish to GitHub”.</span>
+              </p>
+              <div class="admin-list-form" autocomplete="off">
+                <select class="input" data-admin-home-media-type>
+                  <option value="gradient">Gradient</option>
+                  <option value="image">Image</option>
+                  <option value="video">Video (Muted)</option>
+                </select>
+                <input class="input" type="text" data-admin-home-image-url placeholder="背景图片 URL 或站内路径（如 assets/uploads/home/cover.jpg）">
+                <input class="input" type="text" data-admin-home-video-url placeholder="背景视频 URL 或站内路径（如 assets/uploads/home/loop.mp4）">
+                <div class="admin-actions">
+                  <button class="btn" type="button" data-admin-home-media-upload>
+                    <span class="lang zh">选择图片/视频文件</span><span class="lang en">Choose Image/Video File</span>
+                  </button>
+                  <button class="btn primary" type="button" data-admin-home-media-apply>
+                    <span class="lang zh">保存头图设置</span><span class="lang en">Save Hero Media</span>
+                  </button>
+                  <button class="btn subtle" type="button" data-admin-home-media-reset>
+                    <span class="lang zh">恢复橙色渐变</span><span class="lang en">Reset Gradient</span>
+                  </button>
+                  <input class="file-input" type="file" accept="image/*,video/*" hidden data-admin-home-media-input>
+                </div>
+              </div>
+              <p class="admin-note" data-admin-home-media-status></p>
             </div>
           </section>
 

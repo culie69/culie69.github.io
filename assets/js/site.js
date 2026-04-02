@@ -26,6 +26,9 @@
   };
   const PUBLISHED_CONTENT_URL = 'assets/data/site-content.json';
   const PUBLISHED_FETCH_TIMEOUT_MS = 8000;
+  const HERO_BG_TYPES = ['gradient', 'image', 'video'];
+  const HERO_MEDIA_UPLOAD_DIR = 'assets/uploads/home';
+  const HERO_MEDIA_MAX_SIZE_BYTES = 30 * 1024 * 1024;
   const DEFAULT_PUBLISH_CONFIG = {
     owner: 'culie69',
     repo: 'culie69.github.io',
@@ -46,6 +49,10 @@
     phone: '+86 13481156117',
     contact_email: '12432261@mail.sustech.edu.cn',
     home_bg: 'linear-gradient(135deg, #e67f2a 0%, #d4681d 52%, #c75813 100%)',
+    home_bg_type: 'gradient',
+    home_bg_image_url: '',
+    home_bg_video_url: '',
+    home_bg_media_version: '',
     avatar_data_url: '',
 
     edu_intro_zh: '围绕地球物理方向的系统学习路径。',
@@ -237,6 +244,7 @@
 
   let siteContent = {};
   const adminCollectionRenderers = [];
+  let pendingHomeMediaUpload = null;
 
   function byQuery(selector, root = document) {
     return Array.from(root.querySelectorAll(selector));
@@ -244,6 +252,35 @@
 
   function deepClone(value) {
     return JSON.parse(JSON.stringify(value));
+  }
+
+  function normalizeHeroBgType(value) {
+    const next = String(value || '').trim().toLowerCase();
+    return HERO_BG_TYPES.includes(next) ? next : 'gradient';
+  }
+
+  function sanitizePathSegment(fileName) {
+    return String(fileName || '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-zA-Z0-9._-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^\.+/, '')
+      .replace(/^\-+/, '')
+      .slice(0, 96);
+  }
+
+  function buildHeroMediaRepoPath(fileName) {
+    const normalizedName = sanitizePathSegment(fileName) || 'media.bin';
+    const stamp = new Date().toISOString().replace(/[-:.TZ]/g, '');
+    return `${HERO_MEDIA_UPLOAD_DIR}/${stamp}-${normalizedName}`;
+  }
+
+  function clearPendingHomeMediaUpload() {
+    if (pendingHomeMediaUpload && pendingHomeMediaUpload.previewUrl) {
+      URL.revokeObjectURL(pendingHomeMediaUpload.previewUrl);
+    }
+    pendingHomeMediaUpload = null;
   }
 
   function setYear() {
@@ -658,6 +695,38 @@
     }
   }
 
+  function getResolvedMediaUrl(urlText, version) {
+    const base = safeLink(urlText);
+    if (!base) {
+      return '';
+    }
+    const versionText = String(version || '').trim();
+    if (!versionText) {
+      return base;
+    }
+    try {
+      const parsed = new URL(base, window.location.origin);
+      parsed.searchParams.set('v', versionText);
+      return parsed.href;
+    } catch (error) {
+      return base;
+    }
+  }
+
+  function inferHeroBgType(content) {
+    const explicit = normalizeHeroBgType(content.home_bg_type);
+    if (explicit !== 'gradient') {
+      return explicit;
+    }
+    if (String(content.home_bg_video_url || '').trim()) {
+      return 'video';
+    }
+    if (String(content.home_bg_image_url || '').trim()) {
+      return 'image';
+    }
+    return 'gradient';
+  }
+
   function updateEntryVisibility(content) {
     byQuery('[data-entry-prefix]').forEach((row) => {
       const prefix = row.dataset.entryPrefix;
@@ -782,11 +851,57 @@
     }
 
     const homePanel = document.querySelector('[data-home-panel]');
+    const homeBgImage = document.querySelector('[data-home-bg-image]');
+    const homeBgVideo = document.querySelector('[data-home-bg-video]');
+    const heroBgType = inferHeroBgType(content);
+    const heroBgCss = String(content.home_bg || '').trim();
+    const heroMediaVersion = String(content.home_bg_media_version || '').trim();
+    const previewUrl =
+      pendingHomeMediaUpload && pendingHomeMediaUpload.kind === heroBgType ? pendingHomeMediaUpload.previewUrl : '';
+    const imageUrl = previewUrl || getResolvedMediaUrl(content.home_bg_image_url, heroMediaVersion);
+    const videoUrl = previewUrl || getResolvedMediaUrl(content.home_bg_video_url, heroMediaVersion);
+
     if (homePanel) {
-      if (content.home_bg && content.home_bg.trim()) {
-        homePanel.style.background = content.home_bg.trim();
+      if (heroBgCss) {
+        homePanel.style.background = heroBgCss;
       } else {
         homePanel.style.removeProperty('background');
+      }
+      homePanel.dataset.homeBgType = heroBgType;
+    }
+
+    if (homeBgImage) {
+      if (heroBgType === 'image' && imageUrl) {
+        if (homeBgImage.dataset.src !== imageUrl) {
+          homeBgImage.src = imageUrl;
+          homeBgImage.dataset.src = imageUrl;
+        }
+        homeBgImage.hidden = false;
+      } else {
+        homeBgImage.hidden = true;
+        homeBgImage.removeAttribute('src');
+        homeBgImage.dataset.src = '';
+      }
+    }
+
+    if (homeBgVideo) {
+      homeBgVideo.muted = true;
+      homeBgVideo.loop = true;
+      homeBgVideo.autoplay = true;
+      homeBgVideo.playsInline = true;
+      if (heroBgType === 'video' && videoUrl) {
+        if (homeBgVideo.dataset.src !== videoUrl) {
+          homeBgVideo.src = videoUrl;
+          homeBgVideo.dataset.src = videoUrl;
+          homeBgVideo.load();
+        }
+        homeBgVideo.hidden = false;
+        homeBgVideo.play().catch(() => {});
+      } else {
+        homeBgVideo.hidden = true;
+        homeBgVideo.pause();
+        homeBgVideo.removeAttribute('src');
+        homeBgVideo.dataset.src = '';
       }
     }
 
@@ -883,14 +998,41 @@
     return btoa(binary);
   }
 
-  async function publishSiteContentToGitHub(config, content) {
+  function arrayBufferToBase64(buffer) {
+    const bytes = new Uint8Array(buffer);
+    const chunkSize = 0x8000;
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, i + chunkSize);
+      binary += String.fromCharCode(...chunk);
+    }
+    return btoa(binary);
+  }
+
+  function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result;
+        if (!(result instanceof ArrayBuffer)) {
+          reject(new Error('文件读取失败。'));
+          return;
+        }
+        resolve(arrayBufferToBase64(result));
+      };
+      reader.onerror = () => reject(new Error('文件读取失败。'));
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  async function upsertFileToGitHub(config, targetPath, contentBase64, commitMessage) {
     const owner = String(config.owner || '').trim();
     const repo = String(config.repo || '').trim();
     const branch = String(config.branch || '').trim();
-    const path = String(config.path || '').trim();
+    const path = String(targetPath || '').trim();
     const token = String(config.token || '').trim();
 
-    if (!owner || !repo || !branch || !path || !token) {
+    if (!owner || !repo || !branch || !path || !token || !contentBase64) {
       throw new Error('发布参数不完整，请检查 owner/repo/branch/path/token。');
     }
 
@@ -914,10 +1056,9 @@
       throw new Error(`读取远端内容失败（${readResp.status}）。`);
     }
 
-    const payloadText = JSON.stringify(content, null, 2);
     const body = {
-      message: `Update site content ${new Date().toISOString()}`,
-      content: toBase64Utf8(payloadText),
+      message: String(commitMessage || `Update ${path} ${new Date().toISOString()}`),
+      content: contentBase64,
       branch
     };
     if (sha) {
@@ -937,6 +1078,17 @@
       throw new Error(`发布失败（${writeResp.status}）：${errText.slice(0, 180)}`);
     }
     return writeResp.json();
+  }
+
+  async function publishSiteContentToGitHub(config, content) {
+    const path = String(config.path || '').trim();
+    const payloadText = JSON.stringify(content, null, 2);
+    return upsertFileToGitHub(
+      config,
+      path,
+      toBase64Utf8(payloadText),
+      `Update site content ${new Date().toISOString()}`
+    );
   }
 
   function initAdminPanel() {
@@ -963,6 +1115,14 @@
     const avatarResetBtn = document.querySelector('[data-admin-avatar-reset]');
     const avatarInput = document.querySelector('[data-admin-avatar-input]');
     const avatarStatus = document.querySelector('[data-admin-avatar-status]');
+    const homeMediaTypeInput = document.querySelector('[data-admin-home-media-type]');
+    const homeImageUrlInput = document.querySelector('[data-admin-home-image-url]');
+    const homeVideoUrlInput = document.querySelector('[data-admin-home-video-url]');
+    const homeMediaUploadBtn = document.querySelector('[data-admin-home-media-upload]');
+    const homeMediaApplyBtn = document.querySelector('[data-admin-home-media-apply]');
+    const homeMediaResetBtn = document.querySelector('[data-admin-home-media-reset]');
+    const homeMediaInput = document.querySelector('[data-admin-home-media-input]');
+    const homeMediaStatus = document.querySelector('[data-admin-home-media-status]');
     const publishOwnerInput = document.querySelector('[data-admin-publish-owner]');
     const publishRepoInput = document.querySelector('[data-admin-publish-repo]');
     const publishBranchInput = document.querySelector('[data-admin-publish-branch]');
@@ -1004,6 +1164,12 @@
       }
     };
 
+    const setHomeMediaStatus = (text) => {
+      if (homeMediaStatus) {
+        homeMediaStatus.textContent = text;
+      }
+    };
+
     const setPublishStatus = (text) => {
       if (publishStatus) {
         publishStatus.textContent = text;
@@ -1028,6 +1194,24 @@
       path: publishPathInput ? publishPathInput.value.trim() : '',
       token: publishTokenInput ? publishTokenInput.value.trim() : ''
     });
+
+    const fillHomeMediaFields = () => {
+      if (homeMediaTypeInput) {
+        homeMediaTypeInput.value = inferHeroBgType(siteContent);
+      }
+      if (homeImageUrlInput) {
+        homeImageUrlInput.value = String(siteContent.home_bg_image_url || '');
+      }
+      if (homeVideoUrlInput) {
+        homeVideoUrlInput.value = String(siteContent.home_bg_video_url || '');
+      }
+    };
+
+    const saveDraftAndApply = () => {
+      markDraftDirty();
+      saveDraftSiteContent(siteContent);
+      applySiteContent(siteContent);
+    };
 
     const renderSectionOrderManager = () => {
       if (!sectionOrderList) {
@@ -1127,6 +1311,7 @@
 
       if (logged) {
         fillFields();
+        fillHomeMediaFields();
         adminCollectionRenderers.forEach((render) => render());
       }
     };
@@ -1501,6 +1686,124 @@
         importInput.value = '';
       });
 
+    homeMediaUploadBtn &&
+      homeMediaUploadBtn.addEventListener('click', () => {
+        if (!isLoggedIn()) {
+          setHomeMediaStatus('请先登录管理员账号。');
+          return;
+        }
+        homeMediaInput && homeMediaInput.click();
+      });
+
+    homeMediaInput &&
+      homeMediaInput.addEventListener('change', (event) => {
+        if (!isLoggedIn()) {
+          setHomeMediaStatus('请先登录管理员账号。');
+          return;
+        }
+        const file = event.target.files && event.target.files[0];
+        if (!file) {
+          return;
+        }
+
+        const isImage = file.type.startsWith('image/');
+        const isVideo = file.type.startsWith('video/');
+        if (!isImage && !isVideo) {
+          setHomeMediaStatus('请上传图片或视频文件。');
+          homeMediaInput.value = '';
+          return;
+        }
+
+        if (file.size > HERO_MEDIA_MAX_SIZE_BYTES) {
+          setHomeMediaStatus('文件超过 30MB，请压缩后重试。');
+          homeMediaInput.value = '';
+          return;
+        }
+
+        const mediaKind = isVideo ? 'video' : 'image';
+        const repoPath = buildHeroMediaRepoPath(file.name);
+        const previewUrl = URL.createObjectURL(file);
+        clearPendingHomeMediaUpload();
+        pendingHomeMediaUpload = {
+          kind: mediaKind,
+          file,
+          repoPath,
+          previewUrl
+        };
+
+        siteContent.home_bg_type = mediaKind;
+        siteContent.home_bg_media_version = new Date().toISOString();
+        if (mediaKind === 'image') {
+          siteContent.home_bg_image_url = repoPath;
+          siteContent.home_bg_video_url = '';
+        } else {
+          siteContent.home_bg_video_url = repoPath;
+          siteContent.home_bg_image_url = '';
+        }
+        saveDraftAndApply();
+        fillHomeMediaFields();
+        setHomeMediaStatus('媒体文件已选择，点击“发布到GitHub”后访客可见。');
+        homeMediaInput.value = '';
+      });
+
+    homeMediaApplyBtn &&
+      homeMediaApplyBtn.addEventListener('click', () => {
+        if (!isLoggedIn()) {
+          setHomeMediaStatus('请先登录管理员账号。');
+          return;
+        }
+
+        const prevSnapshot = `${inferHeroBgType(siteContent)}|${siteContent.home_bg_image_url || ''}|${siteContent.home_bg_video_url || ''}`;
+        const nextType = normalizeHeroBgType(homeMediaTypeInput ? homeMediaTypeInput.value : 'gradient');
+        const imageUrl = homeImageUrlInput ? homeImageUrlInput.value.trim() : '';
+        const videoUrl = homeVideoUrlInput ? homeVideoUrlInput.value.trim() : '';
+
+        siteContent.home_bg_type = nextType;
+        if (nextType === 'gradient') {
+          siteContent.home_bg_image_url = '';
+          siteContent.home_bg_video_url = '';
+          siteContent.home_bg_media_version = '';
+          clearPendingHomeMediaUpload();
+        } else if (nextType === 'image') {
+          siteContent.home_bg_image_url = imageUrl;
+          siteContent.home_bg_video_url = '';
+          if (!pendingHomeMediaUpload || pendingHomeMediaUpload.kind !== 'image' || pendingHomeMediaUpload.repoPath !== imageUrl) {
+            clearPendingHomeMediaUpload();
+          }
+        } else {
+          siteContent.home_bg_video_url = videoUrl;
+          siteContent.home_bg_image_url = '';
+          if (!pendingHomeMediaUpload || pendingHomeMediaUpload.kind !== 'video' || pendingHomeMediaUpload.repoPath !== videoUrl) {
+            clearPendingHomeMediaUpload();
+          }
+        }
+
+        const nextSnapshot = `${inferHeroBgType(siteContent)}|${siteContent.home_bg_image_url || ''}|${siteContent.home_bg_video_url || ''}`;
+        if (nextSnapshot !== prevSnapshot && siteContent.home_bg_type !== 'gradient') {
+          siteContent.home_bg_media_version = new Date().toISOString();
+        }
+
+        saveDraftAndApply();
+        fillHomeMediaFields();
+        setHomeMediaStatus('头图媒体设置已保存为本地草稿，请发布到 GitHub。');
+      });
+
+    homeMediaResetBtn &&
+      homeMediaResetBtn.addEventListener('click', () => {
+        if (!isLoggedIn()) {
+          setHomeMediaStatus('请先登录管理员账号。');
+          return;
+        }
+        clearPendingHomeMediaUpload();
+        siteContent.home_bg_type = 'gradient';
+        siteContent.home_bg_image_url = '';
+        siteContent.home_bg_video_url = '';
+        siteContent.home_bg_media_version = '';
+        saveDraftAndApply();
+        fillHomeMediaFields();
+        setHomeMediaStatus('头图已恢复为橙色渐变。');
+      });
+
     publishBtn &&
       publishBtn.addEventListener('click', async () => {
         if (!isLoggedIn()) {
@@ -1512,22 +1815,42 @@
         savePublishConfig(config);
 
         try {
-          setPublishStatus('正在发布到 GitHub，请稍候...');
-          await publishSiteContentToGitHub(config, siteContent);
-          const published = await loadPublishedSiteContent({ forceFresh: true });
-          if (published) {
-            siteContent = published;
-            applySiteContent(siteContent);
+          const contentToPublish = deepClone(siteContent);
+
+          if (pendingHomeMediaUpload) {
+            setPublishStatus('正在上传头图媒体到 GitHub，请稍候...');
+            const mediaBase64 = await readFileAsBase64(pendingHomeMediaUpload.file);
+            await upsertFileToGitHub(
+              config,
+              pendingHomeMediaUpload.repoPath,
+              mediaBase64,
+              `Upload home ${pendingHomeMediaUpload.kind} ${new Date().toISOString()}`
+            );
+            contentToPublish.home_bg_type = pendingHomeMediaUpload.kind;
+            contentToPublish.home_bg_media_version = new Date().toISOString();
+            if (pendingHomeMediaUpload.kind === 'image') {
+              contentToPublish.home_bg_image_url = pendingHomeMediaUpload.repoPath;
+              contentToPublish.home_bg_video_url = '';
+            } else {
+              contentToPublish.home_bg_video_url = pendingHomeMediaUpload.repoPath;
+              contentToPublish.home_bg_image_url = '';
+            }
           }
+
+          setPublishStatus('正在发布页面内容到 GitHub，请稍候...');
+          await publishSiteContentToGitHub(config, contentToPublish);
+
+          siteContent = mergeSiteContent(contentToPublish);
           saveCachedPublishedSiteContent(siteContent);
           saveDraftSiteContent(siteContent);
           clearDraftDirty();
+          clearPendingHomeMediaUpload();
+          applySiteContent(siteContent);
           fillFields();
+          fillHomeMediaFields();
           adminCollectionRenderers.forEach((render) => render());
-          if (!published) {
-            applySiteContent(siteContent);
-          }
           setPublishStatus('发布成功，访客刷新后即可看到最新内容。');
+          setHomeMediaStatus('头图媒体已同步到 GitHub。');
         } catch (error) {
           setPublishStatus(`发布失败：${error instanceof Error ? error.message : '未知错误'}`);
         }
