@@ -672,10 +672,54 @@
     });
   }
 
+  function parseIsoTime(value) {
+    const text = String(value || '').trim();
+    if (!text) {
+      return NaN;
+    }
+    const time = Date.parse(text);
+    return Number.isFinite(time) ? time : NaN;
+  }
+
+  function preferNewerContent(preferred, fallback) {
+    const preferredObj = preferred && typeof preferred === 'object' ? preferred : null;
+    const fallbackObj = fallback && typeof fallback === 'object' ? fallback : null;
+    if (!preferredObj) {
+      return fallbackObj;
+    }
+    if (!fallbackObj) {
+      return preferredObj;
+    }
+
+    const preferredVersion = parseIsoTime(preferredObj.home_bg_media_version);
+    const fallbackVersion = parseIsoTime(fallbackObj.home_bg_media_version);
+    if (Number.isFinite(preferredVersion) && Number.isFinite(fallbackVersion)) {
+      return preferredVersion >= fallbackVersion ? preferredObj : fallbackObj;
+    }
+    if (Number.isFinite(preferredVersion)) {
+      return preferredObj;
+    }
+    if (Number.isFinite(fallbackVersion)) {
+      return fallbackObj;
+    }
+    return preferredObj;
+  }
+
   async function loadPublishedSiteContent(options = {}) {
     const forceFresh = !!(options && options.forceFresh);
     try {
       const sources = buildPublishedContentSources(forceFresh);
+      if (forceFresh) {
+        for (const source of sources) {
+          try {
+            const parsed = await fetchPublishedSource(source);
+            return mergeSiteContent(parsed);
+          } catch (error) {
+            // Try next source in priority order.
+          }
+        }
+        return null;
+      }
       const fetchJobs = sources.map((source) => fetchPublishedSource(source));
       const parsed = await firstSuccessful(fetchJobs);
       return mergeSiteContent(parsed);
@@ -2339,7 +2383,8 @@
           await publishSiteContentToGitHub(config, contentToPublish);
 
           const verifiedPublished = await loadPublishedSiteContent({ forceFresh: true });
-          siteContent = mergeSiteContent(verifiedPublished || contentToPublish);
+          const stablePublished = preferNewerContent(verifiedPublished, contentToPublish);
+          siteContent = mergeSiteContent(stablePublished || contentToPublish);
           saveCachedPublishedSiteContent(siteContent);
           saveDraftSiteContent(siteContent);
           clearDraftDirty();
@@ -2477,4 +2522,5 @@
     init().catch(() => {});
   });
 })();
+
 
