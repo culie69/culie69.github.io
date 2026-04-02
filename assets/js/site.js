@@ -548,24 +548,23 @@
     const branch = String(config.branch || DEFAULT_PUBLISH_CONFIG.branch || '').trim();
     const path = String(config.path || DEFAULT_PUBLISH_CONFIG.path || '').trim();
 
-    const sources = [
-      {
-        kind: 'json',
-        url: withCacheBust(PUBLISHED_CONTENT_URL, forceFresh),
-        cache: forceFresh ? 'no-store' : 'no-cache'
-      }
-    ];
+    const localSource = {
+      kind: 'json',
+      url: withCacheBust(PUBLISHED_CONTENT_URL, forceFresh),
+      cache: forceFresh ? 'no-store' : 'no-cache'
+    };
 
+    const remoteSources = [];
     if (owner && repo && branch && path) {
       const encodedPath = encodePathForGitHub(path);
-      sources.push(
+      remoteSources.push(
         {
-          kind: 'json',
+          kind: 'github-api',
           url: withCacheBust(
-            `https://cdn.jsdelivr.net/gh/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}@${encodeURIComponent(branch)}/${encodedPath}`,
+            `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodedPath}?ref=${encodeURIComponent(branch)}`,
             forceFresh
           ),
-          cache: 'no-cache'
+          cache: 'no-store'
         },
         {
           kind: 'json',
@@ -576,15 +575,19 @@
           cache: 'no-cache'
         },
         {
-          kind: 'github-api',
+          kind: 'json',
           url: withCacheBust(
-            `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodedPath}?ref=${encodeURIComponent(branch)}`,
+            `https://cdn.jsdelivr.net/gh/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}@${encodeURIComponent(branch)}/${encodedPath}`,
             forceFresh
           ),
-          cache: 'no-store'
+          cache: 'no-cache'
         }
       );
     }
+
+    const sources = forceFresh && remoteSources.length > 0
+      ? [...remoteSources, localSource]
+      : [localSource, ...remoteSources];
 
     const dedup = new Set();
     return sources.filter((item) => {
@@ -2335,7 +2338,8 @@
           setPublishStatus('正在发布页面内容到 GitHub，请稍候...');
           await publishSiteContentToGitHub(config, contentToPublish);
 
-          siteContent = mergeSiteContent(contentToPublish);
+          const verifiedPublished = await loadPublishedSiteContent({ forceFresh: true });
+          siteContent = mergeSiteContent(verifiedPublished || contentToPublish);
           saveCachedPublishedSiteContent(siteContent);
           saveDraftSiteContent(siteContent);
           clearDraftDirty();
@@ -2473,5 +2477,4 @@
     init().catch(() => {});
   });
 })();
-
 
