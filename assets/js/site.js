@@ -31,6 +31,7 @@
   const HERO_BG_TYPES = ['gradient', 'image', 'video'];
   const HERO_MEDIA_UPLOAD_DIR = 'assets/uploads/home';
   const HERO_MEDIA_MAX_SIZE_BYTES = 30 * 1024 * 1024;
+  const HERO_ADAPTIVE_MIX_THRESHOLD = 1.4;
   const DEFAULT_PUBLISH_CONFIG = {
     owner: 'culie69',
     repo: 'culie69.github.io',
@@ -249,6 +250,7 @@
   let siteContent = {};
   const adminCollectionRenderers = [];
   let pendingHomeMediaUpload = null;
+  const heroMediaAspectCache = new Map();
 
   function byQuery(selector, root = document) {
     return Array.from(root.querySelectorAll(selector));
@@ -271,6 +273,30 @@
     return Math.max(0, Math.min(100, Math.round(parsed)));
   }
 
+  function getHeroPanelAspectRatio(panel) {
+    if (panel) {
+      const rect = panel.getBoundingClientRect();
+      if (rect.width > 1 && rect.height > 1) {
+        return rect.width / rect.height;
+      }
+    }
+    return 2.6;
+  }
+
+  function getAdaptiveHeroFitMode(mediaAspect, heroAspect) {
+    if (!(mediaAspect > 0 && heroAspect > 0)) {
+      return 'cover';
+    }
+    const stretch = Math.max(mediaAspect, heroAspect) / Math.min(mediaAspect, heroAspect);
+    return stretch >= HERO_ADAPTIVE_MIX_THRESHOLD ? 'contain' : 'cover';
+  }
+
+  function toCssUrlValue(urlText) {
+    const escaped = String(urlText || '')
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"');
+    return escaped ? `url("${escaped}")` : 'none';
+  }
   function sanitizePathSegment(fileName) {
     return String(fileName || '')
       .trim()
@@ -929,6 +955,13 @@
       pendingHomeMediaUpload && pendingHomeMediaUpload.kind === heroBgType ? pendingHomeMediaUpload.previewUrl : '';
     const imageUrl = previewUrl || getResolvedMediaUrl(content.home_bg_image_url, heroMediaVersion);
     const videoUrl = previewUrl || getResolvedMediaUrl(content.home_bg_video_url, heroMediaVersion);
+    const heroAspect = getHeroPanelAspectRatio(homePanel);
+    const imageCacheKey = imageUrl ? `image:${imageUrl}` : '';
+    const videoCacheKey = videoUrl ? `video:${videoUrl}` : '';
+    const imageAspect = imageCacheKey ? heroMediaAspectCache.get(imageCacheKey) : NaN;
+    const videoAspect = videoCacheKey ? heroMediaAspectCache.get(videoCacheKey) : NaN;
+    const imageFitMode = heroBgType === 'image' ? getAdaptiveHeroFitMode(imageAspect, heroAspect) : 'cover';
+    const videoFitMode = heroBgType === 'video' ? getAdaptiveHeroFitMode(videoAspect, heroAspect) : 'cover';
 
     if (homePanel) {
       if (heroBgCss) {
@@ -937,20 +970,56 @@
         homePanel.style.removeProperty('background');
       }
       homePanel.dataset.homeBgType = heroBgType;
+      homePanel.dataset.homeImageFit = heroBgType === 'image' ? imageFitMode : '';
+      homePanel.dataset.homeVideoFit = heroBgType === 'video' ? videoFitMode : '';
+      homePanel.style.setProperty('--hero-media-backdrop-image', 'none');
+      homePanel.style.setProperty('--hero-media-backdrop-opacity', '0');
+      homePanel.style.setProperty('--hero-media-mask-a', '0.2');
+      homePanel.style.setProperty('--hero-media-mask-b', '0.38');
+      if (heroBgType === 'image' && imageUrl && imageFitMode === 'contain') {
+        homePanel.style.setProperty('--hero-media-backdrop-image', toCssUrlValue(imageUrl));
+        homePanel.style.setProperty('--hero-media-backdrop-opacity', '0.86');
+        homePanel.style.setProperty('--hero-media-mask-a', '0.28');
+        homePanel.style.setProperty('--hero-media-mask-b', '0.52');
+      }
+      if (heroBgType === 'video' && videoUrl && videoFitMode === 'contain') {
+        homePanel.style.setProperty('--hero-media-mask-a', '0.32');
+        homePanel.style.setProperty('--hero-media-mask-b', '0.56');
+      }
     }
 
     if (homeBgImage) {
       homeBgImage.style.objectPosition = objectPosition;
+      homeBgImage.style.objectFit = heroBgType === 'image' ? imageFitMode : 'cover';
       if (heroBgType === 'image' && imageUrl) {
         if (homeBgImage.dataset.src !== imageUrl) {
           homeBgImage.src = imageUrl;
           homeBgImage.dataset.src = imageUrl;
+        }
+        const syncImageAspect = () => {
+          if (homeBgImage.dataset.src !== imageUrl) {
+            return;
+          }
+          if (!(homeBgImage.naturalWidth > 0 && homeBgImage.naturalHeight > 0)) {
+            return;
+          }
+          const nextAspect = homeBgImage.naturalWidth / homeBgImage.naturalHeight;
+          const prevAspect = heroMediaAspectCache.get(imageCacheKey);
+          if (!Number.isFinite(prevAspect) || Math.abs(prevAspect - nextAspect) > 0.001) {
+            heroMediaAspectCache.set(imageCacheKey, nextAspect);
+            applySiteContent(siteContent);
+          }
+        };
+        homeBgImage.onload = syncImageAspect;
+        if ((!Number.isFinite(imageAspect) || imageAspect <= 0) && homeBgImage.complete) {
+          syncImageAspect();
         }
         homeBgImage.hidden = false;
       } else {
         homeBgImage.hidden = true;
         homeBgImage.removeAttribute('src');
         homeBgImage.dataset.src = '';
+        homeBgImage.onload = null;
       }
     }
 
@@ -960,11 +1029,30 @@
       homeBgVideo.autoplay = true;
       homeBgVideo.playsInline = true;
       homeBgVideo.style.objectPosition = objectPosition;
+      homeBgVideo.style.objectFit = heroBgType === 'video' ? videoFitMode : 'cover';
       if (heroBgType === 'video' && videoUrl) {
         if (homeBgVideo.dataset.src !== videoUrl) {
           homeBgVideo.src = videoUrl;
           homeBgVideo.dataset.src = videoUrl;
           homeBgVideo.load();
+        }
+        const syncVideoAspect = () => {
+          if (homeBgVideo.dataset.src !== videoUrl) {
+            return;
+          }
+          if (!(homeBgVideo.videoWidth > 0 && homeBgVideo.videoHeight > 0)) {
+            return;
+          }
+          const nextAspect = homeBgVideo.videoWidth / homeBgVideo.videoHeight;
+          const prevAspect = heroMediaAspectCache.get(videoCacheKey);
+          if (!Number.isFinite(prevAspect) || Math.abs(prevAspect - nextAspect) > 0.001) {
+            heroMediaAspectCache.set(videoCacheKey, nextAspect);
+            applySiteContent(siteContent);
+          }
+        };
+        homeBgVideo.onloadedmetadata = syncVideoAspect;
+        if ((!Number.isFinite(videoAspect) || videoAspect <= 0) && homeBgVideo.readyState >= 1) {
+          syncVideoAspect();
         }
         homeBgVideo.hidden = false;
         homeBgVideo.play().catch(() => {});
@@ -973,6 +1061,7 @@
         homeBgVideo.pause();
         homeBgVideo.removeAttribute('src');
         homeBgVideo.dataset.src = '';
+        homeBgVideo.onloadedmetadata = null;
       }
     }
 
@@ -2515,12 +2604,28 @@
     initReveal();
     initAdminPanel();
     initContactForm();
+
+    let heroResizeRaf = 0;
+    window.addEventListener(
+      'resize',
+      () => {
+        if (heroResizeRaf) {
+          return;
+        }
+        heroResizeRaf = window.requestAnimationFrame(() => {
+          heroResizeRaf = 0;
+          applySiteContent(siteContent);
+        });
+      },
+      { passive: true }
+    );
+
     await contentReady;
+    applySiteContent(siteContent);
   }
 
   document.addEventListener('DOMContentLoaded', () => {
     init().catch(() => {});
   });
 })();
-
 
