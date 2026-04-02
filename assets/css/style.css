@@ -206,7 +206,7 @@ section[id] {
 .profile-hero {
   position: relative;
   overflow: hidden;
-  padding: 2.2rem 0;
+  padding: 1.6rem 0;
   color: #fffef8;
   background: var(--hero-bg);
   border-bottom: 1px solid color-mix(in srgb, #ffffff 25%, transparent);
@@ -268,9 +268,9 @@ section[id] {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(160px, 220px) 1fr;
-  gap: 1.8rem;
-  align-items: center;
+  grid-template-columns: minmax(150px, 200px) 1fr;
+  gap: 1.35rem;
+  align-items: start;
 }
 
 .hero-avatar-block {
@@ -279,14 +279,23 @@ section[id] {
 }
 
 .hero-avatar-frame {
-  width: min(100%, 190px);
+  width: min(100%, 172px);
   aspect-ratio: 3/4;
   border: 3px solid rgba(255, 255, 255, 0.58);
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 16px 30px rgba(100, 41, 3, 0.35);
+  box-shadow: 0 14px 26px rgba(100, 41, 3, 0.28);
 }
 
+.hero-copy {
+  max-width: 860px;
+  padding: clamp(0.72rem, 1.5vw, 1rem) clamp(0.86rem, 1.8vw, 1.22rem);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: color-mix(in srgb, #0f1a27 22%, transparent);
+  backdrop-filter: blur(3px);
+  box-shadow: 0 8px 24px rgba(6, 12, 20, 0.18);
+}
 .hero-copy small {
   color: rgba(255, 246, 229, 0.85);
 }
@@ -342,16 +351,16 @@ section[id] {
 
 .hero-title {
   font-family: 'Playfair Display', 'Noto Serif SC', serif;
-  font-size: clamp(2rem, 4.5vw, 3rem);
+  font-size: clamp(1.92rem, 4.2vw, 2.72rem);
   margin: 0;
   line-height: 1.1;
   color: #ffffff;
 }
 
 .hero-subtitle {
-  margin: 0.68rem 0 0;
+  margin: 0.62rem 0 0;
   color: rgba(255, 247, 232, 0.92);
-  font-size: 1.18rem;
+  font-size: 1.08rem;
 }
 
 .hero-badges {
@@ -1088,4 +1097,5 @@ body.home-focus-modal-open {
     scroll-behavior: auto !important;
   }
 }
+
 

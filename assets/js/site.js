@@ -296,8 +296,9 @@
       return 0;
     }
     const naturalHeight = panelWidth / mediaAspect;
-    const minHeight = 320;
-    const maxHeight = Math.max(420, window.innerHeight * 0.82);
+    const minHeight = 300;
+    const contentPriorityMaxHeight = Math.min(520, window.innerHeight * 0.66);
+    const maxHeight = Math.max(380, contentPriorityMaxHeight);
     return Math.round(Math.max(minHeight, Math.min(naturalHeight, maxHeight)));
   }
 
@@ -993,17 +994,17 @@
       }
       homePanel.style.setProperty('--hero-media-backdrop-image', 'none');
       homePanel.style.setProperty('--hero-media-backdrop-opacity', '0');
-      homePanel.style.setProperty('--hero-media-mask-a', '0.2');
-      homePanel.style.setProperty('--hero-media-mask-b', '0.38');
+      homePanel.style.setProperty('--hero-media-mask-a', '0.26');
+      homePanel.style.setProperty('--hero-media-mask-b', '0.44');
       if (heroBgType === 'image' && imageUrl && imageFitMode === 'contain') {
         homePanel.style.setProperty('--hero-media-backdrop-image', toCssUrlValue(imageUrl));
-        homePanel.style.setProperty('--hero-media-backdrop-opacity', '0.86');
-        homePanel.style.setProperty('--hero-media-mask-a', '0.28');
-        homePanel.style.setProperty('--hero-media-mask-b', '0.52');
+        homePanel.style.setProperty('--hero-media-backdrop-opacity', '0.68');
+        homePanel.style.setProperty('--hero-media-mask-a', '0.34');
+        homePanel.style.setProperty('--hero-media-mask-b', '0.62');
       }
       if (heroBgType === 'video' && videoUrl && videoFitMode === 'contain') {
-        homePanel.style.setProperty('--hero-media-mask-a', '0.32');
-        homePanel.style.setProperty('--hero-media-mask-b', '0.56');
+        homePanel.style.setProperty('--hero-media-mask-a', '0.38');
+        homePanel.style.setProperty('--hero-media-mask-b', '0.64');
       }
     }
 
@@ -2647,5 +2648,6 @@
     init().catch(() => {});
   });
 })();
+
 
 
