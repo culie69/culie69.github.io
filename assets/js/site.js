@@ -16,7 +16,7 @@
   const DEFAULT_ADMIN_HASH = '9d88dcf23ddc8847acde16ffd32fd569525f0b5f1ef12a5ca8a3415089e9b889';
   const ADMIN_PASSWORD_BASELINE_VERSION = '20260403';
   const AVATAR_PLACEHOLDER = 'assets/img/avatar-placeholder.svg';
-  const COLLECTION_KEYS = ['skills', 'certificates', 'publications'];
+  const COLLECTION_KEYS = ['research', 'skills', 'certificates', 'publications'];
   const SECTION_ORDER_DEFAULT = ['education', 'research', 'skills', 'certificates', 'publications', 'contact'];
   const SECTION_LABELS = {
     education: { zh: '教育经历', en: 'Education' },
@@ -142,6 +142,7 @@
     section_order: [...SECTION_ORDER_DEFAULT],
     education_order: [...FIXED_ENTRY_ORDER_GROUPS.education.prefixes],
     research_order: [...FIXED_ENTRY_ORDER_GROUPS.research.prefixes],
+    research: [],
 
     skills: [
       {
@@ -191,6 +192,8 @@
       }
     ]
   };
+
+  DEFAULT_CONTENT.research = buildLegacyResearchItems(DEFAULT_CONTENT, DEFAULT_CONTENT.research_order);
 
   const FIELD_DEFS = [
     { group: 'basic', key: 'name_zh', label: '中文姓名' },
@@ -657,6 +660,30 @@
     };
   }
 
+  function buildLegacyResearchItems(sourceValue, orderValue) {
+    const source = sourceValue && typeof sourceValue === 'object' ? sourceValue : {};
+    const order = normalizeFixedEntryOrder('research', orderValue);
+
+    return order
+      .map((prefix) =>
+        normalizeCollectionItem({
+          title_zh: source[`${prefix}_zh`],
+          title_en: source[`${prefix}_en`],
+          desc_zh: source[`${prefix}_desc_zh`],
+          desc_en: source[`${prefix}_desc_en`],
+          org_zh: source[`${prefix}_location_zh`],
+          org_en: source[`${prefix}_location_en`],
+          date: source[`${prefix}_date`],
+          link: ''
+        })
+      )
+      .filter((item) =>
+        [item.title_zh, item.title_en, item.desc_zh, item.desc_en, item.org_zh, item.org_en, item.date, item.link].some(
+          (value) => String(value || '').trim().length > 0
+        )
+      );
+  }
+
   function mergeSiteContent(rawValue) {
     const base = deepClone(DEFAULT_CONTENT);
     const raw = rawValue && typeof rawValue === 'object' ? rawValue : {};
@@ -674,6 +701,16 @@
 
       if (key === FIXED_ENTRY_ORDER_GROUPS.research.orderKey) {
         base[key] = normalizeFixedEntryOrder('research', raw[key]);
+        return;
+      }
+
+      if (key === 'research') {
+        const source = raw[key];
+        if (Array.isArray(source)) {
+          base[key] = source.map(normalizeCollectionItem);
+        } else {
+          base[key] = buildLegacyResearchItems({ ...DEFAULT_CONTENT, ...raw }, raw.research_order);
+        }
         return;
       }
 
@@ -1172,7 +1209,7 @@
 
     applySectionOrder(content.section_order);
     applyFixedEntryOrder('education', content.education_order);
-    applyFixedEntryOrder('research', content.research_order);
+    renderCollectionPublic('research', content.research);
 
     const contactForm = document.querySelector('[data-contact-form]');
     if (contactForm) {

@@ -319,7 +319,7 @@
 
       <section id="research" class="panel card reveal">
         <h2><span class="lang zh">研究方向</span><span class="lang en">Research Directions</span></h2>
-        <div class="research-list" style="margin-top:0.75rem;" data-fixed-entry-list="research">
+        <div class="research-list" style="margin-top:0.75rem;" data-list="research">
           <article class="card research-row" data-entry-prefix="res1">
             <div class="entry-main">
               <h3><span class="lang zh" data-bind="res1_zh">基于高密度电法的人体组织成像</span><span class="lang en" data-bind="res1_en">Human Tissue Imaging with High-Density Electrical Methods</span></h3>
@@ -361,6 +361,9 @@
             </div>
           </article>
         </div>
+        <p class="empty" data-list-empty="research" hidden>
+          <span class="lang zh">暂无研究方向记录。</span><span class="lang en">No research records yet.</span>
+        </p>
       </section>
 
       <section id="skills" class="panel card reveal">
@@ -539,14 +542,30 @@
             <div data-admin-fields-group="education"></div>
           </section>
 
-          <section class="admin-block">
-            <h4><span class="lang zh">研究方向条目管理</span><span class="lang en">Research Item Management</span></h4>
+          <section class="admin-block" data-admin-collection="research">
+            <h4><span class="lang zh">研究方向条目管理</span><span class="lang en">Research Items</span></h4>
             <p class="admin-note">
-              <span class="lang zh">可调整研究方向展示顺序；仅改变前台显示顺序，不影响下方字段内容。</span>
-              <span class="lang en">Reorder research items here without changing the field content below.</span>
+              <span class="lang zh">可新增、编辑、删除并调整研究方向顺序。</span>
+              <span class="lang en">Add, edit, remove, and reorder research items here.</span>
             </p>
-            <ul class="list" data-admin-fixed-order-list="research"></ul>
-            <div data-admin-fields-group="research"></div>
+            <form class="admin-list-form" data-admin-collection-form autocomplete="off">
+              <input class="input" name="title_zh" placeholder="标题（中文）" required>
+              <input class="input" name="title_en" placeholder="Title (English)">
+              <textarea class="input" name="desc_zh" rows="3" placeholder="描述（中文）"></textarea>
+              <textarea class="input" name="desc_en" rows="3" placeholder="Description (English)"></textarea>
+              <input class="input" name="org_zh" placeholder="地点/机构（中文）">
+              <input class="input" name="org_en" placeholder="Location / Institution (English)">
+              <input class="input" name="date" placeholder="日期（例：2025.10）">
+              <input class="input" name="link" placeholder="链接（可选）">
+              <button class="btn primary" type="submit" data-admin-collection-submit>
+                <span class="lang zh">新增条目</span><span class="lang en">Add Item</span>
+              </button>
+              <button class="btn subtle" type="button" hidden data-admin-collection-cancel>
+                <span class="lang zh">取消编辑</span><span class="lang en">Cancel Edit</span>
+              </button>
+            </form>
+            <p class="empty" data-admin-collection-empty><span class="lang zh">暂无研究方向条目。</span><span class="lang en">No research items yet.</span></p>
+            <ul class="list" data-admin-collection-list></ul>
           </section>
 
           <section class="admin-block" data-admin-collection="skills">
