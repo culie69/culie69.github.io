@@ -283,7 +283,7 @@
       <section id="education" class="panel card reveal">
         <h2><span class="lang zh">教育经历</span><span class="lang en">Education</span></h2>
         <p class="page-lead"><span class="lang zh" data-bind="edu_intro_zh">围绕地球物理方向的系统学习路径。</span><span class="lang en" data-bind="edu_intro_en">Systematic academic training focused on geophysics.</span></p>
-        <ol class="timeline" style="margin-top:0.9rem;">
+        <ol class="timeline" style="margin-top:0.9rem;" data-fixed-entry-list="education">
           <li data-entry-prefix="edu1">
             <div class="entry-main">
               <h3><span class="lang zh" data-bind="edu1_zh">南方科技大学</span><span class="lang en" data-bind="edu1_en">Southern University of Science and Technology</span></h3>
@@ -319,7 +319,7 @@
 
       <section id="research" class="panel card reveal">
         <h2><span class="lang zh">研究方向</span><span class="lang en">Research Directions</span></h2>
-        <div class="research-list" style="margin-top:0.75rem;">
+        <div class="research-list" style="margin-top:0.75rem;" data-fixed-entry-list="research">
           <article class="card research-row" data-entry-prefix="res1">
             <div class="entry-main">
               <h3><span class="lang zh" data-bind="res1_zh">基于高密度电法的人体组织成像</span><span class="lang en" data-bind="res1_en">Human Tissue Imaging with High-Density Electrical Methods</span></h3>
@@ -531,11 +531,21 @@
 
           <section class="admin-block">
             <h4><span class="lang zh">教育经历条目管理</span><span class="lang en">Education Item Management</span></h4>
+            <p class="admin-note">
+              <span class="lang zh">可调整教育条目展示顺序；仅改变前台显示顺序，不影响下方字段内容。</span>
+              <span class="lang en">Reorder education items here without changing the field content below.</span>
+            </p>
+            <ul class="list" data-admin-fixed-order-list="education"></ul>
             <div data-admin-fields-group="education"></div>
           </section>
 
           <section class="admin-block">
             <h4><span class="lang zh">研究方向条目管理</span><span class="lang en">Research Item Management</span></h4>
+            <p class="admin-note">
+              <span class="lang zh">可调整研究方向展示顺序；仅改变前台显示顺序，不影响下方字段内容。</span>
+              <span class="lang en">Reorder research items here without changing the field content below.</span>
+            </p>
+            <ul class="list" data-admin-fixed-order-list="research"></ul>
             <div data-admin-fields-group="research"></div>
           </section>
 

@@ -26,6 +26,18 @@
     publications: { zh: '出版论文', en: 'Publications' },
     contact: { zh: '联系', en: 'Contact' }
   };
+  const FIXED_ENTRY_ORDER_GROUPS = {
+    education: {
+      orderKey: 'education_order',
+      prefixes: ['edu1', 'edu2', 'edu3'],
+      label: { zh: '教育经历', en: 'Education' }
+    },
+    research: {
+      orderKey: 'research_order',
+      prefixes: ['res1', 'res2', 'res3', 'res4'],
+      label: { zh: '研究方向', en: 'Research Directions' }
+    }
+  };
   const PUBLISHED_CONTENT_URL = 'assets/data/site-content.json';
   const CRITICAL_CONTENT_URL = 'assets/data/site-critical.json';
   const PUBLISHED_INDEX_URL = 'index.html';
@@ -128,6 +140,8 @@
     res4_location_en: 'Yangtze University',
     res4_date: '2023.05 - 2024.06',
     section_order: [...SECTION_ORDER_DEFAULT],
+    education_order: [...FIXED_ENTRY_ORDER_GROUPS.education.prefixes],
+    research_order: [...FIXED_ENTRY_ORDER_GROUPS.research.prefixes],
 
     skills: [
       {
@@ -601,23 +615,32 @@
     }
   }
 
-  function normalizeSectionOrder(orderValue) {
+  function normalizeKnownOrder(orderValue, defaults) {
     const source = Array.isArray(orderValue) ? orderValue.map((item) => String(item || '').trim()) : [];
     const next = [];
 
     source.forEach((id) => {
-      if (SECTION_ORDER_DEFAULT.includes(id) && !next.includes(id)) {
+      if (defaults.includes(id) && !next.includes(id)) {
         next.push(id);
       }
     });
 
-    SECTION_ORDER_DEFAULT.forEach((id) => {
+    defaults.forEach((id) => {
       if (!next.includes(id)) {
         next.push(id);
       }
     });
 
     return next;
+  }
+
+  function normalizeSectionOrder(orderValue) {
+    return normalizeKnownOrder(orderValue, SECTION_ORDER_DEFAULT);
+  }
+
+  function normalizeFixedEntryOrder(groupId, orderValue) {
+    const config = FIXED_ENTRY_ORDER_GROUPS[groupId];
+    return config ? normalizeKnownOrder(orderValue, config.prefixes) : [];
   }
 
   function normalizeCollectionItem(item) {
@@ -641,6 +664,16 @@
     Object.keys(base).forEach((key) => {
       if (key === 'section_order') {
         base[key] = normalizeSectionOrder(raw[key]);
+        return;
+      }
+
+      if (key === FIXED_ENTRY_ORDER_GROUPS.education.orderKey) {
+        base[key] = normalizeFixedEntryOrder('education', raw[key]);
+        return;
+      }
+
+      if (key === FIXED_ENTRY_ORDER_GROUPS.research.orderKey) {
+        base[key] = normalizeFixedEntryOrder('research', raw[key]);
         return;
       }
 
@@ -1065,6 +1098,20 @@
     }
   }
 
+  function applyFixedEntryOrder(groupId, orderValue) {
+    const container = document.querySelector(`[data-fixed-entry-list="${groupId}"]`);
+    if (!container) {
+      return;
+    }
+
+    normalizeFixedEntryOrder(groupId, orderValue).forEach((prefix) => {
+      const row = container.querySelector(`[data-entry-prefix="${prefix}"]`);
+      if (row && row.parentElement === container) {
+        container.appendChild(row);
+      }
+    });
+  }
+
   function renderCollectionPublic(type, items) {
     const container = document.querySelector(`[data-list="${type}"]`);
     const empty = document.querySelector(`[data-list-empty="${type}"]`);
@@ -1124,6 +1171,8 @@
     });
 
     applySectionOrder(content.section_order);
+    applyFixedEntryOrder('education', content.education_order);
+    applyFixedEntryOrder('research', content.research_order);
 
     const contactForm = document.querySelector('[data-contact-form]');
     if (contactForm) {
@@ -1543,6 +1592,7 @@
     const publishBtn = document.querySelector('[data-admin-publish]');
     const publishStatus = document.querySelector('[data-admin-publish-status]');
     const sectionOrderList = document.querySelector('[data-admin-section-order-list]');
+    const fixedEntryOrderLists = byQuery('[data-admin-fixed-order-list]', editorWrap);
 
     if (!panel || !editorWrap || fieldGroupWraps.length === 0) {
       return;
@@ -1563,6 +1613,14 @@
         authStatus.textContent = text;
       }
     };
+
+    const fixedEntryOrderListMap = {};
+    fixedEntryOrderLists.forEach((list) => {
+      const groupId = list.dataset.adminFixedOrderList;
+      if (groupId) {
+        fixedEntryOrderListMap[groupId] = list;
+      }
+    });
 
     const setEditStatus = (text) => {
       if (editStatus) {
@@ -2104,6 +2162,67 @@
       });
     };
 
+    const getFixedEntryLabel = (groupId, prefix) => {
+      const config = FIXED_ENTRY_ORDER_GROUPS[groupId];
+      const ordinal = (prefix.match(/\d+/) || [''])[0];
+      const fallbackZh = config ? `${config.label.zh} ${ordinal || prefix}` : prefix;
+      const fallbackEn = config ? `${config.label.en} ${ordinal || prefix}` : prefix;
+      return {
+        zh: String(siteContent[`${prefix}_zh`] || '').trim() || fallbackZh,
+        en: String(siteContent[`${prefix}_en`] || '').trim() || fallbackEn
+      };
+    };
+
+    const getFixedEntryMeta = (prefix) => {
+      const location = String(siteContent[`${prefix}_location_zh`] || siteContent[`${prefix}_location_en`] || '').trim();
+      const date = String(siteContent[`${prefix}_date`] || '').trim();
+      return [location, date].filter(Boolean).join(' | ');
+    };
+
+    const renderFixedEntryOrderManager = (groupId) => {
+      const list = fixedEntryOrderListMap[groupId];
+      const config = FIXED_ENTRY_ORDER_GROUPS[groupId];
+      if (!list || !config) {
+        return;
+      }
+
+      const order = normalizeFixedEntryOrder(groupId, siteContent[config.orderKey]);
+      siteContent[config.orderKey] = order;
+      list.innerHTML = '';
+
+      order.forEach((prefix, index) => {
+        const label = getFixedEntryLabel(groupId, prefix);
+        const meta = getFixedEntryMeta(prefix);
+        const li = document.createElement('li');
+        li.className = 'list-item';
+        li.innerHTML = `
+          <div class="head">
+            <strong>${escapeHtml(label.zh)} / ${escapeHtml(label.en)}</strong>
+            <span class="admin-mini-actions">
+              <button type="button" class="btn subtle" data-fixed-order-action="up" data-fixed-order-group="${groupId}" data-index="${index}" ${index === 0 ? 'disabled' : ''}>上移</button>
+              <button type="button" class="btn subtle" data-fixed-order-action="down" data-fixed-order-group="${groupId}" data-index="${index}" ${index === order.length - 1 ? 'disabled' : ''}>下移</button>
+            </span>
+          </div>
+          ${meta ? `<div class="meta">${escapeHtml(meta)}</div>` : ""}
+        `;
+        list.appendChild(li);
+      });
+    };
+
+    const saveFixedEntryOrder = (groupId, nextOrder) => {
+      const config = FIXED_ENTRY_ORDER_GROUPS[groupId];
+      if (!config) {
+        return;
+      }
+
+      siteContent[config.orderKey] = normalizeFixedEntryOrder(groupId, nextOrder);
+      markDraftDirty();
+      saveDraftSiteContent(siteContent);
+      applySiteContent(siteContent);
+      renderFixedEntryOrderManager(groupId);
+      setEditStatus(`${config.label.zh}顺序已更新（本地草稿），请发布到 GitHub 后同步给访客。`);
+    };
+
     const buildFieldForm = () => {
       Object.values(fieldGroupMap).forEach((wrap) => {
         wrap.innerHTML = '';
@@ -2385,6 +2504,46 @@
       });
     };
 
+    const bindFixedEntryOrderManagers = () => {
+      Object.entries(fixedEntryOrderListMap).forEach(([groupId, list]) => {
+        const config = FIXED_ENTRY_ORDER_GROUPS[groupId];
+        if (!config) {
+          return;
+        }
+
+        list.addEventListener('click', (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLElement)) {
+            return;
+          }
+
+          const action = target.dataset.fixedOrderAction;
+          const targetGroup = target.dataset.fixedOrderGroup;
+          const index = Number(target.dataset.index);
+          if (!action || !targetGroup || Number.isNaN(index) || targetGroup !== groupId) {
+            return;
+          }
+
+          if (!isLoggedIn()) {
+            setEditStatus('请先登录管理员账号。');
+            return;
+          }
+
+          const order = normalizeFixedEntryOrder(groupId, siteContent[config.orderKey]);
+          const nextIndex = action === 'up' ? index - 1 : index + 1;
+          if (nextIndex < 0 || nextIndex >= order.length) {
+            return;
+          }
+
+          saveFixedEntryOrder(groupId, moveArrayItem(order, index, nextIndex));
+        });
+
+        const render = () => renderFixedEntryOrderManager(groupId);
+        adminCollectionRenderers.push(render);
+        render();
+      });
+    };
+
     if (sectionOrderList) {
       sectionOrderList.addEventListener('click', (event) => {
         const target = event.target;
@@ -2430,6 +2589,7 @@
     fillFields();
     fillPublishConfig(loadPublishConfig());
     bindCollectionManagers();
+    bindFixedEntryOrderManagers();
     refreshAuthView();
 
     openBtn && openBtn.addEventListener('click', openPanel);

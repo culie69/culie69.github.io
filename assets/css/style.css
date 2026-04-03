@@ -905,9 +905,15 @@ select.input {
 
 .list-item .head {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
+}
+
+.list-item .head strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .list-item .meta {
