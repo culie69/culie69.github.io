@@ -1,10 +1,10 @@
-﻿{
-    "home_bg":  "linear-gradient(135deg, #e67f2a 0%, #d4681d 52%, #c75813 100%)",
-    "home_bg_type":  "image",
-    "home_bg_image_url":  "assets/uploads/home/20260403-hero-optimized.jpg",
-    "home_bg_video_url":  "",
-    "home_bg_media_version":  "2026-04-03T11:03:02.203Z",
-    "home_bg_focus_x":  "50",
-    "home_bg_focus_y":  "50",
-    "avatar_image_url":  "assets/uploads/avatar/20260403-bootstrap-avatar.jpg"
+{
+  "home_bg": "linear-gradient(135deg, #e67f2a 0%, #d4681d 52%, #c75813 100%)",
+  "home_bg_type": "image",
+  "home_bg_image_url": "assets/uploads/home/20260403123836118-_20260403014329_201_91.jpg",
+  "home_bg_video_url": "",
+  "home_bg_media_version": "2026-04-03T12:39:03.071Z",
+  "home_bg_focus_x": "50",
+  "home_bg_focus_y": "52",
+  "avatar_image_url": ""
 }
