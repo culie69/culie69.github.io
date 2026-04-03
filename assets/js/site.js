@@ -28,6 +28,7 @@
   };
   const PUBLISHED_CONTENT_URL = 'assets/data/site-content.json';
   const CRITICAL_CONTENT_URL = 'assets/data/site-critical.json';
+  const PUBLISHED_INDEX_URL = 'index.html';
   const PUBLISHED_FETCH_TIMEOUT_MS = 8000;
   const HERO_BG_TYPES = ['gradient', 'image', 'video'];
   const HERO_MEDIA_UPLOAD_DIR = 'assets/uploads/home';
@@ -402,6 +403,76 @@
       home_bg_focus_y: String(source.home_bg_focus_y || DEFAULT_CONTENT.home_bg_focus_y),
       avatar_image_url: String(source.avatar_image_url || '')
     };
+  }
+
+
+  function getSiteIndexPath() {
+    return 'index.html';
+  }
+
+  function appendCacheVersion(urlText, version) {
+    const text = String(urlText || '').trim();
+    if (!text) {
+      return '';
+    }
+    try {
+      const parsed = new URL(text, window.location.href);
+      if (version) {
+        parsed.searchParams.set('v', version);
+      }
+      if (/^https?:/i.test(text)) {
+        return parsed.href;
+      }
+      return parsed.pathname.replace(/^\//, '') + parsed.search + parsed.hash;
+    } catch (error) {
+      return text;
+    }
+  }
+
+  function serializeInlineCriticalContent(content) {
+    return JSON.stringify(pickCriticalSiteContent(content), null, 2)
+      .replace(/</g, '\\u003c')
+      .replace(/<\/script/gi, '<\\/script');
+  }
+
+  function renderIndexShellHtml(htmlText, content) {
+    let nextHtml = String(htmlText || '').replace(/\r\n/g, '\n');
+    const critical = pickCriticalSiteContent(content);
+    const heroType = normalizeHeroBgType(critical.home_bg_type);
+    const heroImageUrl = heroType === 'image' ? appendCacheVersion(critical.home_bg_image_url, critical.home_bg_media_version) : '';
+    const avatarUrl = String(critical.avatar_image_url || '').trim() || AVATAR_PLACEHOLDER;
+    const heroImageTag =
+      '<img class="hero-bg-image" src="' +
+      escapeHtml(heroImageUrl) +
+      '" alt="" data-home-bg-image fetchpriority="high" loading="eager" decoding="async"' +
+      (heroImageUrl ? '' : ' hidden') +
+      '>';
+    const avatarImageTag =
+      '<img src="' + escapeHtml(avatarUrl) + '" alt="Profile avatar" data-avatar-image loading="eager" decoding="async">';
+    const preloadTag = heroImageUrl
+      ? '  <link rel="preload" href="' + escapeHtml(heroImageUrl) + '" as="image" fetchpriority="high" data-home-preload>'
+      : '';
+
+    nextHtml = nextHtml.replace(/\n?\s*<link rel="preload"[^>]*data-home-preload[^>]*>/, '');
+    nextHtml = nextHtml.replace(
+      /<link rel="preload" href="assets\/data\/site-critical\.json" as="fetch">/,
+      (match) => (preloadTag ? match + '\n' + preloadTag : match)
+    );
+    nextHtml = nextHtml.replace(/<img class="hero-bg-image"[^>]*data-home-bg-image[^>]*>/, heroImageTag);
+    nextHtml = nextHtml.replace(/<img [^>]*data-avatar-image[^>]*>/, avatarImageTag);
+
+    const inlineTag =
+      '<script id="ll-critical-inline" type="application/json">\n' +
+      serializeInlineCriticalContent(critical) +
+      '\n    </script>';
+
+    if (/<script id="ll-critical-inline" type="application\/json">[\s\S]*?<\/script>/.test(nextHtml)) {
+      nextHtml = nextHtml.replace(/<script id="ll-critical-inline" type="application\/json">[\s\S]*?<\/script>/, inlineTag);
+    } else {
+      nextHtml = nextHtml.replace(/<script>\s*\(function \(\) \{/, inlineTag + '\n    <script>\n      (function () {');
+    }
+
+    return nextHtml;
   }
 
   function setYear() {
@@ -1395,6 +1466,26 @@
       criticalPath,
       toBase64Utf8(payloadText),
       `Update site critical content ${new Date().toISOString()}`
+    );
+  }
+
+
+  async function loadLocalIndexShellHtml() {
+    const response = await fetch(PUBLISHED_INDEX_URL, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error('读取首页模板失败，无法同步首屏内容。');
+    }
+    return response.text();
+  }
+
+  async function publishIndexShellToGitHub(config, content) {
+    const htmlText = await loadLocalIndexShellHtml();
+    const renderedHtml = renderIndexShellHtml(htmlText, content);
+    return upsertFileToGitHub(
+      config,
+      getSiteIndexPath(),
+      toBase64Utf8(renderedHtml),
+      'Update index shell ' + new Date().toISOString()
     );
   }
 
@@ -2631,6 +2722,9 @@
           setPublishStatus('正在发布页面内容到 GitHub，请稍候...');
           await publishSiteContentToGitHub(config, contentToPublish);
           await publishCriticalSiteContentToGitHub(config, contentToPublish);
+
+          setPublishStatus('正在同步首页首屏结构到 GitHub，请稍候...');
+          await publishIndexShellToGitHub(config, contentToPublish);
 
           const verifiedPublished = await loadPublishedSiteContent({ forceFresh: true });
           const stablePublished = preferNewerContent(verifiedPublished, contentToPublish);

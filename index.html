@@ -10,6 +10,7 @@
   <meta property="og:type" content="website">
   <meta property="og:image" content="assets/img/avatar-placeholder.svg">
   <link rel="preload" href="assets/data/site-critical.json" as="fetch">
+  <link rel="preload" href="assets/uploads/home/20260403-hero-optimized.jpg?v=2026-04-03T11%3A03%3A02.203Z" as="image" fetchpriority="high" data-home-preload>
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body data-lang="zh" data-theme="light">
@@ -32,14 +33,14 @@
   <main>
     <section id="home" class="profile-hero reveal" data-home-panel>
       <div class="hero-media-layer" aria-hidden="true">
-        <img class="hero-bg-image" src="" alt="" data-home-bg-image fetchpriority="high" loading="eager" decoding="async" hidden>
+        <img class="hero-bg-image" src="assets/uploads/home/20260403-hero-optimized.jpg?v=2026-04-03T11%3A03%3A02.203Z" alt="" data-home-bg-image fetchpriority="high" loading="eager" decoding="async">
         <video class="hero-bg-video" data-home-bg-video muted loop playsinline preload="metadata" hidden></video>
         <div class="hero-media-mask"></div>
       </div>
       <div class="container profile-hero-inner">
         <aside class="hero-avatar-block">
           <div class="avatar-frame hero-avatar-frame">
-            <img src="assets/img/avatar-placeholder.svg" alt="Profile avatar" data-avatar-image loading="eager" decoding="async">
+            <img src="assets/uploads/avatar/20260403-bootstrap-avatar.jpg" alt="Profile avatar" data-avatar-image loading="eager" decoding="async">
           </div>
         </aside>
 
@@ -75,10 +76,23 @@
       </div>
     </section>
 
+    <script id="ll-critical-inline" type="application/json">
+{
+  "home_bg": "linear-gradient(135deg, #e67f2a 0%, #d4681d 52%, #c75813 100%)",
+  "home_bg_type": "image",
+  "home_bg_image_url": "assets/uploads/home/20260403-hero-optimized.jpg",
+  "home_bg_video_url": "",
+  "home_bg_media_version": "2026-04-03T11:03:02.203Z",
+  "home_bg_focus_x": "50",
+  "home_bg_focus_y": "50",
+  "avatar_image_url": "assets/uploads/avatar/20260403-bootstrap-avatar.jpg"
+}
+    </script>
     <script>
       (function () {
         const STORAGE_KEY = 'll_site_content';
         const CRITICAL_URL = 'assets/data/site-critical.json';
+        const INLINE_CRITICAL_ID = 'll-critical-inline';
         const HERO_TYPES = ['gradient', 'image', 'video'];
 
         function normalizeType(value, content) {
@@ -103,6 +117,30 @@
           return Math.max(0, Math.min(100, Math.round(parsed)));
         }
 
+        function parseTime(value) {
+          const text = String(value || '').trim();
+          if (!text) {
+            return NaN;
+          }
+          const time = Date.parse(text);
+          return Number.isFinite(time) ? time : NaN;
+        }
+
+        function preferNewer(preferred, fallback) {
+          const preferredVersion = preferred ? parseTime(preferred.home_bg_media_version) : NaN;
+          const fallbackVersion = fallback ? parseTime(fallback.home_bg_media_version) : NaN;
+          if (preferred && fallback && Number.isFinite(preferredVersion) && Number.isFinite(fallbackVersion)) {
+            return preferredVersion >= fallbackVersion ? preferred : fallback;
+          }
+          if (preferred && Number.isFinite(preferredVersion)) {
+            return preferred;
+          }
+          if (fallback && Number.isFinite(fallbackVersion)) {
+            return fallback;
+          }
+          return preferred || fallback || null;
+        }
+
         function resolveUrl(rawValue, version) {
           const text = String(rawValue || '').trim();
           if (!text) {
@@ -119,6 +157,22 @@
             return parsed.href;
           } catch (error) {
             return '';
+          }
+        }
+
+        function readInlineCriticalContent() {
+          const node = document.getElementById(INLINE_CRITICAL_ID);
+          if (!node) {
+            return null;
+          }
+          const text = String(node.textContent || '').trim();
+          if (!text) {
+            return null;
+          }
+          try {
+            return JSON.parse(text);
+          } catch (error) {
+            return null;
           }
         }
 
@@ -155,9 +209,8 @@
           if (image) {
             image.style.objectPosition = objectPosition;
             if (heroType === 'image' && imageUrl) {
-              if (image.dataset.src !== imageUrl) {
-                image.src = imageUrl;
-                image.dataset.src = imageUrl;
+              if (image.getAttribute('src') !== imageUrl) {
+                image.setAttribute('src', imageUrl);
               }
               image.hidden = false;
             } else {
@@ -168,9 +221,8 @@
           if (video) {
             video.style.objectPosition = objectPosition;
             if (heroType === 'video' && videoUrl) {
-              if (video.dataset.src !== videoUrl) {
-                video.src = videoUrl;
-                video.dataset.src = videoUrl;
+              if (video.getAttribute('src') !== videoUrl) {
+                video.setAttribute('src', videoUrl);
                 video.load();
               }
               video.hidden = false;
@@ -180,16 +232,25 @@
           }
 
           if (avatar && avatarUrl) {
-            avatar.src = avatarUrl;
+            if (avatar.getAttribute('src') !== avatarUrl) {
+              avatar.setAttribute('src', avatarUrl);
+            }
           }
         }
 
+        const inline = readInlineCriticalContent();
+        let cached = null;
         try {
-          const cached = window.localStorage.getItem(STORAGE_KEY);
-          if (cached) {
-            applyCriticalContent(JSON.parse(cached));
+          const cachedText = window.localStorage.getItem(STORAGE_KEY);
+          if (cachedText) {
+            cached = JSON.parse(cachedText);
           }
         } catch (error) {}
+
+        const bootstrapContent = preferNewer(inline, cached);
+        if (bootstrapContent) {
+          applyCriticalContent(bootstrapContent);
+        }
 
         window
           .fetch(CRITICAL_URL, { cache: 'default' })
