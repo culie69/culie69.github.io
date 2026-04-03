@@ -9,6 +9,7 @@
   <meta property="og:description" content="A concise and detailed bilingual personal academic website.">
   <meta property="og:type" content="website">
   <meta property="og:image" content="assets/img/avatar-placeholder.svg">
+  <link rel="preload" href="assets/data/site-critical.json" as="fetch">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body data-lang="zh" data-theme="light">
@@ -31,14 +32,14 @@
   <main>
     <section id="home" class="profile-hero reveal" data-home-panel>
       <div class="hero-media-layer" aria-hidden="true">
-        <img class="hero-bg-image" src="" alt="" data-home-bg-image hidden>
+        <img class="hero-bg-image" src="" alt="" data-home-bg-image fetchpriority="high" loading="eager" decoding="async" hidden>
         <video class="hero-bg-video" data-home-bg-video muted loop playsinline preload="metadata" hidden></video>
         <div class="hero-media-mask"></div>
       </div>
       <div class="container profile-hero-inner">
         <aside class="hero-avatar-block">
           <div class="avatar-frame hero-avatar-frame">
-            <img src="assets/img/avatar-placeholder.svg" alt="Profile avatar" data-avatar-image>
+            <img src="assets/img/avatar-placeholder.svg" alt="Profile avatar" data-avatar-image loading="eager" decoding="async">
           </div>
         </aside>
 
@@ -73,6 +74,135 @@
         </div>
       </div>
     </section>
+
+    <script>
+      (function () {
+        const STORAGE_KEY = 'll_site_content';
+        const CRITICAL_URL = 'assets/data/site-critical.json';
+        const HERO_TYPES = ['gradient', 'image', 'video'];
+
+        function normalizeType(value, content) {
+          const next = String(value || '').trim().toLowerCase();
+          if (HERO_TYPES.includes(next)) {
+            return next;
+          }
+          if (content && String(content.home_bg_video_url || '').trim()) {
+            return 'video';
+          }
+          if (content && String(content.home_bg_image_url || '').trim()) {
+            return 'image';
+          }
+          return 'gradient';
+        }
+
+        function normalizePercent(value, fallback) {
+          const parsed = Number.parseFloat(String(value || '').trim());
+          if (!Number.isFinite(parsed)) {
+            return fallback;
+          }
+          return Math.max(0, Math.min(100, Math.round(parsed)));
+        }
+
+        function resolveUrl(rawValue, version) {
+          const text = String(rawValue || '').trim();
+          if (!text) {
+            return '';
+          }
+          try {
+            const parsed = new URL(text, window.location.href);
+            if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+              return '';
+            }
+            if (version) {
+              parsed.searchParams.set('v', version);
+            }
+            return parsed.href;
+          } catch (error) {
+            return '';
+          }
+        }
+
+        function applyCriticalContent(content) {
+          if (!content || typeof content !== 'object') {
+            return;
+          }
+
+          const panel = document.querySelector('[data-home-panel]');
+          const image = document.querySelector('[data-home-bg-image]');
+          const video = document.querySelector('[data-home-bg-video]');
+          const avatar = document.querySelector('[data-avatar-image]');
+          if (!panel) {
+            return;
+          }
+
+          const heroType = normalizeType(content.home_bg_type, content);
+          const version = String(content.home_bg_media_version || '').trim();
+          const focusX = normalizePercent(content.home_bg_focus_x, 50);
+          const focusY = normalizePercent(content.home_bg_focus_y, 50);
+          const objectPosition = focusX + '% ' + focusY + '%';
+          const imageUrl = resolveUrl(content.home_bg_image_url, version);
+          const videoUrl = resolveUrl(content.home_bg_video_url, version);
+          const avatarUrl = resolveUrl(content.avatar_image_url, '');
+          const background = String(content.home_bg || '').trim();
+
+          panel.dataset.homeBgType = heroType;
+          panel.dataset.homeFocusX = String(focusX);
+          panel.dataset.homeFocusY = String(focusY);
+          if (background) {
+            panel.style.background = background;
+          }
+
+          if (image) {
+            image.style.objectPosition = objectPosition;
+            if (heroType === 'image' && imageUrl) {
+              if (image.dataset.src !== imageUrl) {
+                image.src = imageUrl;
+                image.dataset.src = imageUrl;
+              }
+              image.hidden = false;
+            } else {
+              image.hidden = true;
+            }
+          }
+
+          if (video) {
+            video.style.objectPosition = objectPosition;
+            if (heroType === 'video' && videoUrl) {
+              if (video.dataset.src !== videoUrl) {
+                video.src = videoUrl;
+                video.dataset.src = videoUrl;
+                video.load();
+              }
+              video.hidden = false;
+            } else {
+              video.hidden = true;
+            }
+          }
+
+          if (avatar && avatarUrl) {
+            avatar.src = avatarUrl;
+          }
+        }
+
+        try {
+          const cached = window.localStorage.getItem(STORAGE_KEY);
+          if (cached) {
+            applyCriticalContent(JSON.parse(cached));
+          }
+        } catch (error) {}
+
+        window
+          .fetch(CRITICAL_URL, { cache: 'default' })
+          .then(function (response) {
+            if (!response.ok) {
+              throw new Error('critical content unavailable');
+            }
+            return response.json();
+          })
+          .then(applyCriticalContent)
+          .catch(function () {});
+      })();
+    </script>
 
     <section class="section-nav-shell reveal" aria-label="Section navigation">
       <div class="container">
@@ -479,5 +609,4 @@
   <script src="assets/js/site.js"></script>
 </body>
 </html>
-
 

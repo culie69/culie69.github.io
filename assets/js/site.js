@@ -27,9 +27,11 @@
     contact: { zh: '联系', en: 'Contact' }
   };
   const PUBLISHED_CONTENT_URL = 'assets/data/site-content.json';
+  const CRITICAL_CONTENT_URL = 'assets/data/site-critical.json';
   const PUBLISHED_FETCH_TIMEOUT_MS = 8000;
   const HERO_BG_TYPES = ['gradient', 'image', 'video'];
   const HERO_MEDIA_UPLOAD_DIR = 'assets/uploads/home';
+  const AVATAR_UPLOAD_DIR = 'assets/uploads/avatar';
   const HERO_MEDIA_MAX_SIZE_BYTES = 30 * 1024 * 1024;
   const HERO_ADAPTIVE_MIX_THRESHOLD = 1.4;
   const DEFAULT_PUBLISH_CONFIG = {
@@ -58,6 +60,7 @@
     home_bg_media_version: '',
     home_bg_focus_x: '50',
     home_bg_focus_y: '50',
+    avatar_image_url: '',
     avatar_data_url: '',
 
     edu_intro_zh: '围绕地球物理方向的系统学习路径。',
@@ -250,6 +253,7 @@
   let siteContent = {};
   const adminCollectionRenderers = [];
   let pendingHomeMediaUpload = null;
+  let pendingAvatarUpload = null;
   const heroMediaAspectCache = new Map();
 
   function byQuery(selector, root = document) {
@@ -325,11 +329,79 @@
     return `${HERO_MEDIA_UPLOAD_DIR}/${stamp}-${normalizedName}`;
   }
 
+  function buildAvatarRepoPath(fileName) {
+    const normalizedName = sanitizePathSegment(fileName) || 'avatar.bin';
+    const stamp = new Date().toISOString().replace(/[-:.TZ]/g, '');
+    return `${AVATAR_UPLOAD_DIR}/${stamp}-${normalizedName}`;
+  }
+
   function clearPendingHomeMediaUpload() {
     if (pendingHomeMediaUpload && pendingHomeMediaUpload.previewUrl) {
       URL.revokeObjectURL(pendingHomeMediaUpload.previewUrl);
     }
     pendingHomeMediaUpload = null;
+  }
+
+  function clearPendingAvatarUpload() {
+    if (pendingAvatarUpload && pendingAvatarUpload.previewUrl) {
+      URL.revokeObjectURL(pendingAvatarUpload.previewUrl);
+    }
+    pendingAvatarUpload = null;
+  }
+
+  function getBootstrapSiteContent() {
+    const homePanel = document.querySelector('[data-home-panel]');
+    const homeBgImage = document.querySelector('[data-home-bg-image]');
+    const homeBgVideo = document.querySelector('[data-home-bg-video]');
+    const avatarImg = document.querySelector('[data-avatar-image]');
+    const homeBgType = normalizeHeroBgType(homePanel ? homePanel.dataset.homeBgType : '');
+    const heroImageUrl = homeBgImage ? String(homeBgImage.getAttribute('src') || '').trim() : '';
+    const heroVideoUrl = homeBgVideo ? String(homeBgVideo.getAttribute('src') || '').trim() : '';
+    const avatarImageUrl = avatarImg ? String(avatarImg.getAttribute('src') || '').trim() : '';
+    return mergeSiteContent({
+      home_bg_type: homeBgType,
+      home_bg_image_url: heroImageUrl,
+      home_bg_video_url: heroVideoUrl,
+      home_bg_focus_x: homePanel ? String(homePanel.dataset.homeFocusX || DEFAULT_CONTENT.home_bg_focus_x) : DEFAULT_CONTENT.home_bg_focus_x,
+      home_bg_focus_y: homePanel ? String(homePanel.dataset.homeFocusY || DEFAULT_CONTENT.home_bg_focus_y) : DEFAULT_CONTENT.home_bg_focus_y,
+      avatar_image_url: avatarImageUrl
+    });
+  }
+
+  function getAvatarUrl(content) {
+    if (pendingAvatarUpload && pendingAvatarUpload.previewUrl) {
+      return pendingAvatarUpload.previewUrl;
+    }
+    const avatarImageUrl = String((content && content.avatar_image_url) || '').trim();
+    if (avatarImageUrl) {
+      return avatarImageUrl;
+    }
+    return String((content && content.avatar_data_url) || '').trim() || AVATAR_PLACEHOLDER;
+  }
+
+  function getCriticalContentPath(config) {
+    const configuredPath = String((config && config.path) || DEFAULT_PUBLISH_CONFIG.path || '')
+      .trim()
+      .replace(/\\/g, '/');
+    if (!configuredPath) {
+      return 'assets/data/site-critical.json';
+    }
+    const lastSlash = configuredPath.lastIndexOf('/');
+    return lastSlash >= 0 ? `${configuredPath.slice(0, lastSlash + 1)}site-critical.json` : 'site-critical.json';
+  }
+
+  function pickCriticalSiteContent(content) {
+    const source = content && typeof content === 'object' ? content : {};
+    return {
+      home_bg: String(source.home_bg || DEFAULT_CONTENT.home_bg),
+      home_bg_type: normalizeHeroBgType(source.home_bg_type),
+      home_bg_image_url: String(source.home_bg_image_url || ''),
+      home_bg_video_url: String(source.home_bg_video_url || ''),
+      home_bg_media_version: String(source.home_bg_media_version || ''),
+      home_bg_focus_x: String(source.home_bg_focus_x || DEFAULT_CONTENT.home_bg_focus_x),
+      home_bg_focus_y: String(source.home_bg_focus_y || DEFAULT_CONTENT.home_bg_focus_y),
+      avatar_image_url: String(source.avatar_image_url || '')
+    };
   }
 
   function setYear() {
@@ -578,16 +650,16 @@
     return `${url}${join}t=${Date.now()}`;
   }
 
-  function buildPublishedContentSources(forceFresh) {
+  function buildContentSources(forceFresh, localUrl, remotePath) {
     const config = loadPublishConfig();
     const owner = String(config.owner || DEFAULT_PUBLISH_CONFIG.owner || '').trim();
     const repo = String(config.repo || DEFAULT_PUBLISH_CONFIG.repo || '').trim();
     const branch = String(config.branch || DEFAULT_PUBLISH_CONFIG.branch || '').trim();
-    const path = String(config.path || DEFAULT_PUBLISH_CONFIG.path || '').trim();
+    const path = String(remotePath || '').trim();
 
     const localSource = {
       kind: 'json',
-      url: withCacheBust(PUBLISHED_CONTENT_URL, forceFresh),
+      url: withCacheBust(localUrl, forceFresh),
       cache: forceFresh ? 'no-store' : 'no-cache'
     };
 
@@ -624,7 +696,7 @@
 
     const sources = forceFresh && remoteSources.length > 0
       ? [...remoteSources, localSource]
-      : [localSource, ...remoteSources];
+      : [localSource];
 
     const dedup = new Set();
     return sources.filter((item) => {
@@ -634,6 +706,17 @@
       dedup.add(item.url);
       return true;
     });
+  }
+
+  function buildPublishedContentSources(forceFresh) {
+    const config = loadPublishConfig();
+    const path = String(config.path || DEFAULT_PUBLISH_CONFIG.path || '').trim();
+    return buildContentSources(forceFresh, PUBLISHED_CONTENT_URL, path);
+  }
+
+  function buildCriticalContentSources(forceFresh) {
+    const config = loadPublishConfig();
+    return buildContentSources(forceFresh, CRITICAL_CONTENT_URL, getCriticalContentPath(config));
   }
 
   function fromBase64Utf8(base64Text) {
@@ -746,6 +829,29 @@
     const forceFresh = !!(options && options.forceFresh);
     try {
       const sources = buildPublishedContentSources(forceFresh);
+      if (forceFresh) {
+        for (const source of sources) {
+          try {
+            const parsed = await fetchPublishedSource(source);
+            return mergeSiteContent(parsed);
+          } catch (error) {
+            // Try next source in priority order.
+          }
+        }
+        return null;
+      }
+      const fetchJobs = sources.map((source) => fetchPublishedSource(source));
+      const parsed = await firstSuccessful(fetchJobs);
+      return mergeSiteContent(parsed);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async function loadCriticalSiteContent(options = {}) {
+    const forceFresh = !!(options && options.forceFresh);
+    try {
+      const sources = buildCriticalContentSources(forceFresh);
       if (forceFresh) {
         for (const source of sources) {
           try {
@@ -985,6 +1091,8 @@
         homePanel.style.removeProperty('background');
       }
       homePanel.dataset.homeBgType = heroBgType;
+      homePanel.dataset.homeFocusX = String(focusX);
+      homePanel.dataset.homeFocusY = String(focusY);
       homePanel.dataset.homeImageFit = heroBgType === 'image' ? imageFitMode : '';
       homePanel.dataset.homeVideoFit = heroBgType === 'video' ? videoFitMode : '';
       if (imageTargetMinHeight > 0) {
@@ -1087,7 +1195,7 @@
 
     const avatarImg = document.querySelector('[data-avatar-image]');
     if (avatarImg) {
-      avatarImg.src = String(content.avatar_data_url || '').trim() || AVATAR_PLACEHOLDER;
+      avatarImg.src = getAvatarUrl(content);
     }
 
     updateEntryVisibility(content);
@@ -1106,11 +1214,19 @@
     } else if (cachedPublished) {
       siteContent = cachedPublished;
     } else {
-      siteContent = mergeSiteContent({});
+      siteContent = getBootstrapSiteContent();
     }
     applySiteContent(siteContent);
 
-    const published = await loadPublishedSiteContent({ forceFresh: true });
+    if (!dirtyDraft) {
+      const critical = await loadCriticalSiteContent();
+      if (critical) {
+        siteContent = mergeSiteContent({ ...siteContent, ...pickCriticalSiteContent(critical) });
+        applySiteContent(siteContent);
+      }
+    }
+
+    const published = await loadPublishedSiteContent();
     if (published) {
       saveCachedPublishedSiteContent(published);
       if (!dirtyDraft) {
@@ -1268,6 +1384,17 @@
       path,
       toBase64Utf8(payloadText),
       `Update site content ${new Date().toISOString()}`
+    );
+  }
+
+  async function publishCriticalSiteContentToGitHub(config, content) {
+    const criticalPath = getCriticalContentPath(config);
+    const payloadText = JSON.stringify(pickCriticalSiteContent(content), null, 2);
+    return upsertFileToGitHub(
+      config,
+      criticalPath,
+      toBase64Utf8(payloadText),
+      `Update site critical content ${new Date().toISOString()}`
     );
   }
 
@@ -1493,7 +1620,7 @@
       cleanupHomeFocusPreview();
 
       if (!silentHint) {
-        setHomeFocusHintText('????????????/??????????????????????');
+        setHomeFocusHintText('拖动橙色矩形框，选择图片或视频在头图中的展示位置；点“应用框选”保存。');
       }
     };
 
@@ -1618,7 +1745,7 @@
       new Promise((resolve, reject) => {
         if (kind === 'image') {
           if (!homeFocusPreviewImage) {
-            reject(new Error('???????'));
+            reject(new Error('预览组件不可用。'));
             return;
           }
           if (homeFocusPreviewVideo) {
@@ -1642,7 +1769,7 @@
           const onError = () => {
             img.removeEventListener('load', onLoad);
             img.removeEventListener('error', onError);
-            reject(new Error('???????????????????'));
+            reject(new Error('加载头图预览失败，请检查图片链接。'));
           };
 
           img.addEventListener('load', onLoad, { once: true });
@@ -1652,7 +1779,7 @@
         }
 
         if (!homeFocusPreviewVideo) {
-          reject(new Error('???????'));
+          reject(new Error('预览组件不可用。'));
           return;
         }
         if (homeFocusPreviewImage) {
@@ -1680,7 +1807,7 @@
         const onError = () => {
           video.removeEventListener('loadedmetadata', onLoadedMeta);
           video.removeEventListener('error', onError);
-          reject(new Error('???????????????????'));
+          reject(new Error('加载头图预览失败，请检查视频链接。'));
         };
 
         video.addEventListener('loadedmetadata', onLoadedMeta, { once: true });
@@ -1691,13 +1818,13 @@
 
     const openHomeFocusPicker = async () => {
       if (!homeFocusModal || !homeFocusStage || !homeFocusRect) {
-        setHomeMediaStatus('???????????????????');
+        setHomeMediaStatus('当前浏览器不支持头图展示范围框选。');
         return;
       }
 
       const source = getCurrentHomeFocusSource();
       if (!source) {
-        setHomeMediaStatus('????????????????');
+        setHomeMediaStatus('请先选择图片或视频头图。');
         return;
       }
 
@@ -1729,7 +1856,7 @@
       if (homeFocusRect) {
         homeFocusRect.hidden = true;
       }
-      setHomeFocusHintText('????????????...');
+      setHomeFocusHintText('正在加载头图预览...');
 
       try {
         const size = await loadHomeFocusMediaForPicker(source.kind, source.url, token);
@@ -1739,14 +1866,14 @@
         homeFocusPickerState.mediaWidth = size.width;
         homeFocusPickerState.mediaHeight = size.height;
         if (!(size.width > 0 && size.height > 0)) {
-          throw new Error('????????');
+          throw new Error('头图媒体尺寸无效。');
         }
 
-        setHomeFocusHintText('????????????/????????????');
+        setHomeFocusHintText('拖动橙色矩形框，选择可视区域。');
         layoutHomeFocusPicker();
       } catch (error) {
         closeHomeFocusPicker({ restoreFocus: true, silentHint: true });
-        setHomeMediaStatus(`???????${error instanceof Error ? error.message : "????"}`);
+        setHomeMediaStatus(`头图预览失败：${error instanceof Error ? error.message : '未知错误'}`);
       }
     };
 
@@ -2488,8 +2615,22 @@
             }
           }
 
+          if (pendingAvatarUpload) {
+            setPublishStatus('正在上传头像到 GitHub，请稍候...');
+            const avatarBase64 = await readFileAsBase64(pendingAvatarUpload.file);
+            await upsertFileToGitHub(
+              config,
+              pendingAvatarUpload.repoPath,
+              avatarBase64,
+              `Upload avatar ${new Date().toISOString()}`
+            );
+            contentToPublish.avatar_image_url = pendingAvatarUpload.repoPath;
+            contentToPublish.avatar_data_url = '';
+          }
+
           setPublishStatus('正在发布页面内容到 GitHub，请稍候...');
           await publishSiteContentToGitHub(config, contentToPublish);
+          await publishCriticalSiteContentToGitHub(config, contentToPublish);
 
           const verifiedPublished = await loadPublishedSiteContent({ forceFresh: true });
           const stablePublished = preferNewerContent(verifiedPublished, contentToPublish);
@@ -2498,12 +2639,14 @@
           saveDraftSiteContent(siteContent);
           clearDraftDirty();
           clearPendingHomeMediaUpload();
+          clearPendingAvatarUpload();
           applySiteContent(siteContent);
           fillFields();
           fillHomeMediaFields();
           adminCollectionRenderers.forEach((render) => render());
           setPublishStatus('发布成功，访客刷新后即可看到最新内容。');
           setHomeMediaStatus('头图媒体已同步到 GitHub。');
+          setAvatarStatus('头像已同步到 GitHub。');
         } catch (error) {
           setPublishStatus(`发布失败：${error instanceof Error ? error.message : '未知错误'}`);
         }
@@ -2554,20 +2697,21 @@
           return;
         }
 
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = typeof reader.result === 'string' ? reader.result : '';
-          if (!result) {
-            setAvatarStatus('头像读取失败。');
-            return;
-          }
-          siteContent.avatar_data_url = result;
-          markDraftDirty();
-          saveDraftSiteContent(siteContent);
-          applySiteContent(siteContent);
-          setAvatarStatus('头像已更新为本地草稿，请发布到 GitHub 后访客可见。');
+        const repoPath = buildAvatarRepoPath(file.name);
+        const previewUrl = URL.createObjectURL(file);
+        clearPendingAvatarUpload();
+        pendingAvatarUpload = {
+          file,
+          repoPath,
+          previewUrl
         };
-        reader.readAsDataURL(file);
+
+        siteContent.avatar_image_url = repoPath;
+        siteContent.avatar_data_url = '';
+        markDraftDirty();
+        saveDraftSiteContent(siteContent);
+        applySiteContent(siteContent);
+        setAvatarStatus('头像已更新为本地草稿，请发布到 GitHub 后访客可见。');
         avatarInput.value = '';
       });
 
@@ -2577,6 +2721,8 @@
           setAvatarStatus('请先登录管理员账号。');
           return;
         }
+        clearPendingAvatarUpload();
+        siteContent.avatar_image_url = '';
         siteContent.avatar_data_url = '';
         markDraftDirty();
         saveDraftSiteContent(siteContent);
@@ -2648,6 +2794,4 @@
     init().catch(() => {});
   });
 })();
-
-
 
