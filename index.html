@@ -8,7 +8,33 @@
   <meta property="og:title" content="Linfeng Li | Personal Academic Website">
   <meta property="og:description" content="A concise and detailed bilingual personal academic website.">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="assets/img/avatar-placeholder.svg">
+  <meta property="og:image" content="assets/uploads/avatar/20260403-bootstrap-avatar.jpg">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Linfeng Li | Personal Academic Website">
+  <meta name="twitter:description" content="Linfeng Li personal academic website: education, research directions, skills, certificates, and contact.">
+  <meta name="twitter:image" content="assets/uploads/avatar/20260403-bootstrap-avatar.jpg">
+  <link rel="canonical" href="https://culie69.github.io/">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Linfeng Li",
+    "alternateName": "李林峰",
+    "affiliation": {
+      "@type": "Organization",
+      "name": "Southern University of Science and Technology",
+      "url": "https://www.sustech.edu.cn"
+    },
+    "jobTitle": "M.S. Student in Geophysics",
+    "email": "12432261@mail.sustech.edu.cn",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Shenzhen",
+      "addressCountry": "CN"
+    },
+    "url": "https://culie69.github.io"
+  }
+  </script>
   <link rel="preload" href="assets/data/site-critical.json" as="fetch">
   <link rel="preload" href="assets/uploads/home/20260403123836118-_20260403014329_201_91.jpg?v=2026-04-03T12%3A39%3A03.071Z" as="image" fetchpriority="high" data-home-preload>
   <link rel="stylesheet" href="assets/css/style.css">
@@ -22,10 +48,10 @@
       </a>
       <div class="header-actions">
         <div class="lang-switch" role="group" aria-label="Language switch">
-          <button type="button" data-lang-btn="zh">中</button>
-          <button type="button" data-lang-btn="en">EN</button>
+          <button type="button" data-lang-btn="zh" aria-pressed="true">中</button>
+          <button type="button" data-lang-btn="en" aria-pressed="false">EN</button>
         </div>
-        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch theme">◐</button>
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch theme" aria-pressed="false">◐</button>
       </div>
     </div>
   </header>
@@ -269,12 +295,14 @@
       <div class="container">
         <nav class="section-nav-inner">
           <a class="nav-link" href="#home"><span class="lang zh">主页</span><span class="lang en">Home</span></a>
-          <a class="nav-link" href="#education"><span class="lang zh">教育经历</span><span class="lang en">Education</span></a>
-          <a class="nav-link" href="#research"><span class="lang zh">研究方向</span><span class="lang en">Research</span></a>
-          <a class="nav-link" href="#skills"><span class="lang zh">技能</span><span class="lang en">Skills</span></a>
-          <a class="nav-link" href="#certificates"><span class="lang zh">证书</span><span class="lang en">Certificates</span></a>
-          <a class="nav-link" href="#publications"><span class="lang zh">出版论文</span><span class="lang en">Publications</span></a>
-          <a class="nav-link" href="#contact"><span class="lang zh">联系</span><span class="lang en">Contact</span></a>
+          <ul class="section-nav-list">
+          <li><a class="nav-link" href="#education"><span class="lang zh">教育经历</span><span class="lang en">Education</span></a></li>
+          <li><a class="nav-link" href="#research"><span class="lang zh">研究方向</span><span class="lang en">Research</span></a></li>
+          <li><a class="nav-link" href="#skills"><span class="lang zh">技能</span><span class="lang en">Skills</span></a></li>
+          <li><a class="nav-link" href="#certificates"><span class="lang zh">证书</span><span class="lang en">Certificates</span></a></li>
+          <li><a class="nav-link" href="#publications"><span class="lang zh">出版论文</span><span class="lang en">Publications</span></a></li>
+          <li><a class="nav-link" href="#contact"><span class="lang zh">联系</span><span class="lang en">Contact</span></a></li>
+          </ul>
         </nav>
       </div>
     </section>
@@ -283,7 +311,7 @@
       <section id="education" class="panel card reveal">
         <h2><span class="lang zh">教育经历</span><span class="lang en">Education</span></h2>
         <p class="page-lead"><span class="lang zh" data-bind="edu_intro_zh">围绕地球物理方向的系统学习路径。</span><span class="lang en" data-bind="edu_intro_en">Systematic academic training focused on geophysics.</span></p>
-        <ol class="timeline" style="margin-top:0.9rem;" data-fixed-entry-list="education">
+        <ol class="timeline" data-fixed-entry-list="education">
           <li data-entry-prefix="edu1">
             <div class="entry-main">
               <h3><span class="lang zh" data-bind="edu1_zh">南方科技大学</span><span class="lang en" data-bind="edu1_en">Southern University of Science and Technology</span></h3>
@@ -304,22 +332,12 @@
               <p class="entry-date" data-bind="edu2_date">2020.09 - 2024.06</p>
             </div>
           </li>
-          <li data-entry-prefix="edu3">
-            <div class="entry-main">
-              <h3><span class="lang zh" data-bind="edu3_zh"></span><span class="lang en" data-bind="edu3_en"></span></h3>
-              <p><span class="lang zh" data-bind="edu3_desc_zh"></span><span class="lang en" data-bind="edu3_desc_en"></span></p>
-            </div>
-            <div class="entry-side">
-              <p><span class="lang zh" data-bind="edu3_location_zh"></span><span class="lang en" data-bind="edu3_location_en"></span></p>
-              <p class="entry-date" data-bind="edu3_date"></p>
-            </div>
-          </li>
         </ol>
       </section>
 
       <section id="research" class="panel card reveal">
         <h2><span class="lang zh">研究方向</span><span class="lang en">Research Directions</span></h2>
-        <div class="research-list" style="margin-top:0.75rem;" data-list="research">
+        <div class="research-list" data-list="research">
           <article class="card research-row" data-entry-prefix="res1">
             <div class="entry-main">
               <h3><span class="lang zh" data-bind="res1_zh">基于高密度电法的人体组织成像</span><span class="lang en" data-bind="res1_en">Human Tissue Imaging with High-Density Electrical Methods</span></h3>
@@ -368,7 +386,7 @@
 
       <section id="skills" class="panel card reveal">
         <h2><span class="lang zh">专业技能</span><span class="lang en">Skills</span></h2>
-        <div class="research-list" style="margin-top:0.75rem;" data-list="skills"></div>
+        <div class="research-list" data-list="skills"></div>
         <p class="empty" data-list-empty="skills">
           <span class="lang zh">暂无技能记录。</span><span class="lang en">No skill records yet.</span>
         </p>
@@ -376,7 +394,7 @@
 
       <section id="certificates" class="panel card reveal">
         <h2><span class="lang zh">证书与奖项</span><span class="lang en">Certificates & Awards</span></h2>
-        <div class="research-list" style="margin-top:0.75rem;" data-list="certificates"></div>
+        <div class="research-list" data-list="certificates"></div>
         <p class="empty" data-list-empty="certificates">
           <span class="lang zh">暂无证书记录。</span><span class="lang en">No certificate records yet.</span>
         </p>
@@ -384,7 +402,7 @@
 
       <section id="publications" class="panel card reveal">
         <h2><span class="lang zh">出版论文</span><span class="lang en">Publications</span></h2>
-        <div class="research-list" style="margin-top:0.75rem;" data-list="publications"></div>
+        <div class="research-list" data-list="publications"></div>
         <p class="empty" data-list-empty="publications">
           <span class="lang zh">暂无论文记录。</span><span class="lang en">No publication records yet.</span>
         </p>
@@ -405,13 +423,13 @@
           <h2><span class="lang zh">留言</span><span class="lang en">Message</span></h2>
           <p><span class="lang zh">填写后会调用默认邮件客户端发送。</span><span class="lang en">Submitting opens your default mail client.</span></p>
           <form data-contact-form data-contact-email="" autocomplete="off">
-            <div class="grid" style="margin-top:0.7rem;">
+            <div class="grid contact-form-grid">
               <input class="input" type="text" name="name" placeholder="Name / 姓名" required>
               <input class="input" type="email" name="email" placeholder="Email / 邮箱">
               <textarea class="input" name="message" rows="5" placeholder="Message / 留言内容" required></textarea>
               <button class="btn primary" type="submit"><span class="lang zh">发送</span><span class="lang en">Send</span></button>
             </div>
-            <p class="empty" style="margin-top:0.65rem;" data-contact-status>
+            <p class="empty contact-status-text" data-contact-status>
               <span class="lang zh">请在管理面板设置你的公开邮箱。</span>
               <span class="lang en">Set your public email in admin panel first.</span>
             </p>
@@ -423,8 +441,16 @@
 
   <footer class="site-footer">
     <div class="container">
-      <span class="lang zh">© <span data-year></span> <span data-bind="name_zh">李林峰</span> | 个人学术网站</span>
-      <span class="lang en">© <span data-year></span> <span data-bind="name_en">Linfeng Li</span> | Personal Academic Website</span>
+      <div class="footer-content">
+        <div class="footer-copyright">
+          <span class="lang zh">© <span data-year></span> <span data-bind="name_zh">李林峰</span> | 个人学术网站</span>
+          <span class="lang en">© <span data-year></span> <span data-bind="name_en">Linfeng Li</span> | Personal Academic Website</span>
+        </div>
+        <nav class="footer-links" aria-label="Social links">
+          <a href="https://github.com/culie69" target="_blank" rel="noopener noreferrer" aria-label="GitHub">GitHub</a>
+          <a href="https://scholar.google.com/citations?user=&hl=en" target="_blank" rel="noopener noreferrer" aria-label="Google Scholar">Google Scholar</a>
+        </nav>
+      </div>
     </div>
   </footer>
 
