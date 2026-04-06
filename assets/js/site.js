@@ -16,7 +16,7 @@
   const DEFAULT_ADMIN_HASH = '9d88dcf23ddc8847acde16ffd32fd569525f0b5f1ef12a5ca8a3415089e9b889';
   const ADMIN_PASSWORD_BASELINE_VERSION = '20260403';
   const AVATAR_PLACEHOLDER = 'assets/img/avatar-placeholder.svg';
-  const COLLECTION_KEYS = ['research', 'skills', 'certificates', 'publications'];
+  const COLLECTION_KEYS = ['education', 'research', 'skills', 'certificates', 'publications'];
   const SECTION_ORDER_DEFAULT = ['education', 'research', 'skills', 'certificates', 'publications', 'contact'];
   const SECTION_LABELS = {
     education: { zh: '教育经历', en: 'Education' },
@@ -78,27 +78,27 @@
 
     edu_intro_zh: '围绕地球物理方向的系统学习路径。',
     edu_intro_en: 'Systematic academic training focused on geophysics.',
-    edu1_zh: '南方科技大学',
-    edu1_en: 'Southern University of Science and Technology',
-    edu1_desc_zh: '理学硕士，地球物理',
-    edu1_desc_en: 'M.S., Geophysics',
-    edu1_location_zh: '中国深圳',
-    edu1_location_en: 'Shenzhen, China',
-    edu1_date: '2024.09 - 至今',
-    edu2_zh: '长江大学',
-    edu2_en: 'Yangtze University',
-    edu2_desc_zh: '理学学士，地球物理',
-    edu2_desc_en: 'B.S., Geophysics',
+    edu1_zh: '广西大学附属中学',
+    edu1_en: 'High School Affiliated to Guangxi University',
+    edu1_desc_zh: '',
+    edu1_desc_en: '',
+    edu1_location_zh: '中国南宁',
+    edu1_location_en: 'Nanning, China',
+    edu1_date: '2017.09 - 2020.06',
+    edu2_zh: '长江大学（武汉校区）',
+    edu2_en: 'Yangtze University (Wuhan Campus)',
+    edu2_desc_zh: '',
+    edu2_desc_en: '',
     edu2_location_zh: '中国武汉',
     edu2_location_en: 'Wuhan, China',
     edu2_date: '2020.09 - 2024.06',
-    edu3_zh: '',
-    edu3_en: '',
+    edu3_zh: '南方科技大学（硕士、博士）',
+    edu3_en: 'SUSTech (Master and Ph.D.)',
     edu3_desc_zh: '',
     edu3_desc_en: '',
-    edu3_location_zh: '',
-    edu3_location_en: '',
-    edu3_date: '',
+    edu3_location_zh: '中国深圳',
+    edu3_location_en: 'Shenzhen, China',
+    edu3_date: '2024.09',
 
     res1_zh: '基于高密度电法的人体组织成像',
     res1_en: 'Human Tissue Imaging with High-Density Electrical Methods',
@@ -142,6 +142,7 @@
     section_order: [...SECTION_ORDER_DEFAULT],
     education_order: [...FIXED_ENTRY_ORDER_GROUPS.education.prefixes],
     research_order: [...FIXED_ENTRY_ORDER_GROUPS.research.prefixes],
+    education: [],
     research: [],
 
     skills: [
@@ -193,6 +194,7 @@
     ]
   };
 
+  DEFAULT_CONTENT.education = buildLegacyEducationItems(DEFAULT_CONTENT, DEFAULT_CONTENT.education_order);
   DEFAULT_CONTENT.research = buildLegacyResearchItems(DEFAULT_CONTENT, DEFAULT_CONTENT.research_order);
 
   const FIELD_DEFS = [
@@ -210,27 +212,6 @@
 
     { group: 'education', key: 'edu_intro_zh', label: '教育引导中文', type: 'textarea' },
     { group: 'education', key: 'edu_intro_en', label: 'Education Intro English', type: 'textarea' },
-    { group: 'education', key: 'edu1_zh', label: '教育1中文' },
-    { group: 'education', key: 'edu1_en', label: 'Education 1 English' },
-    { group: 'education', key: 'edu1_desc_zh', label: '教育1描述中文', type: 'textarea' },
-    { group: 'education', key: 'edu1_desc_en', label: 'Education 1 Desc English', type: 'textarea' },
-    { group: 'education', key: 'edu1_location_zh', label: '教育1地点中文' },
-    { group: 'education', key: 'edu1_location_en', label: 'Education 1 Location English' },
-    { group: 'education', key: 'edu1_date', label: '教育1日期' },
-    { group: 'education', key: 'edu2_zh', label: '教育2中文' },
-    { group: 'education', key: 'edu2_en', label: 'Education 2 English' },
-    { group: 'education', key: 'edu2_desc_zh', label: '教育2描述中文', type: 'textarea' },
-    { group: 'education', key: 'edu2_desc_en', label: 'Education 2 Desc English', type: 'textarea' },
-    { group: 'education', key: 'edu2_location_zh', label: '教育2地点中文' },
-    { group: 'education', key: 'edu2_location_en', label: 'Education 2 Location English' },
-    { group: 'education', key: 'edu2_date', label: '教育2日期' },
-    { group: 'education', key: 'edu3_zh', label: '教育3中文' },
-    { group: 'education', key: 'edu3_en', label: 'Education 3 English' },
-    { group: 'education', key: 'edu3_desc_zh', label: '教育3描述中文', type: 'textarea' },
-    { group: 'education', key: 'edu3_desc_en', label: 'Education 3 Desc English', type: 'textarea' },
-    { group: 'education', key: 'edu3_location_zh', label: '教育3地点中文' },
-    { group: 'education', key: 'edu3_location_en', label: 'Education 3 Location English' },
-    { group: 'education', key: 'edu3_date', label: '教育3日期' },
 
     { group: 'research', key: 'res1_zh', label: 'Research 1 (ZH)' },
     { group: 'research', key: 'res1_en', label: 'Research 1 (EN)' },
@@ -660,6 +641,30 @@
     };
   }
 
+  function buildLegacyEducationItems(sourceValue, orderValue) {
+    const source = sourceValue && typeof sourceValue === 'object' ? sourceValue : {};
+    const order = normalizeFixedEntryOrder('education', orderValue);
+
+    return order
+      .map((prefix) =>
+        normalizeCollectionItem({
+          title_zh: source[`${prefix}_zh`],
+          title_en: source[`${prefix}_en`],
+          desc_zh: source[`${prefix}_desc_zh`],
+          desc_en: source[`${prefix}_desc_en`],
+          org_zh: source[`${prefix}_location_zh`],
+          org_en: source[`${prefix}_location_en`],
+          date: source[`${prefix}_date`],
+          link: ''
+        })
+      )
+      .filter((item) =>
+        [item.title_zh, item.title_en, item.desc_zh, item.desc_en, item.org_zh, item.org_en, item.date, item.link].some(
+          (value) => String(value || '').trim().length > 0
+        )
+      );
+  }
+
   function buildLegacyResearchItems(sourceValue, orderValue) {
     const source = sourceValue && typeof sourceValue === 'object' ? sourceValue : {};
     const order = normalizeFixedEntryOrder('research', orderValue);
@@ -701,6 +706,16 @@
 
       if (key === FIXED_ENTRY_ORDER_GROUPS.research.orderKey) {
         base[key] = normalizeFixedEntryOrder('research', raw[key]);
+        return;
+      }
+
+      if (key === 'education') {
+        const source = raw[key];
+        if (Array.isArray(source)) {
+          base[key] = source.map(normalizeCollectionItem);
+        } else {
+          base[key] = buildLegacyEducationItems({ ...DEFAULT_CONTENT, ...raw }, raw.education_order);
+        }
         return;
       }
 
@@ -1172,6 +1187,19 @@
 
     list.forEach((item) => {
       const row = normalizeCollectionItem(item);
+      if (type === 'education') {
+        const li = document.createElement('li');
+        const title = toBilingualHtml(row.title_zh, row.title_en);
+        const desc = toBilingualHtml(row.desc_zh, row.desc_en);
+        const org = toBilingualHtml(row.org_zh, row.org_en);
+
+        li.innerHTML =
+          `<div class="entry-main"><h3>${title}</h3>${row.desc_zh || row.desc_en ? `<p>${desc}</p>` : ''}</div>` +
+          `<div class="entry-side">${row.org_zh || row.org_en ? `<p>${org}</p>` : ''}${row.date ? `<p class="entry-date">${escapeHtml(row.date)}</p>` : ''}</div>`;
+        container.appendChild(li);
+        return;
+      }
+
       const article = document.createElement('article');
       article.className = 'card research-row';
 
@@ -1208,7 +1236,7 @@
     });
 
     applySectionOrder(content.section_order);
-    applyFixedEntryOrder('education', content.education_order);
+    renderCollectionPublic('education', content.education);
     renderCollectionPublic('research', content.research);
 
     const contactForm = document.querySelector('[data-contact-form]');
